@@ -42,7 +42,6 @@ jobs:
           host: ${{ vars.HOST }}
           username: ${{ vars.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          fingerprint: ${{ secrets.SSH_FINGERPRINT }}
           script: >
             APP_VERSION=${{ github.sha }}
             DOCKERHUB_REGISTRY=${{ vars.DOCKERHUB_REGISTRY }}
