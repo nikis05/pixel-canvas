@@ -35,6 +35,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           source: "./deploy/docker-compose.yml,./deploy/nginx"
           target: usr/share/pixel-canvas/
+          debug: true
       - name: Rollout
         uses: appleboy/ssh-action@v1
         with:
