@@ -1,0 +1,14 @@
+server {
+    listen 443 ssl;
+    server_name localhost;
+    keepalive_timeout 70;
+
+    ssl_certificate /etc/nginx/cert/cert.crt;
+    ssl_certificate_key /etc/nginx/cert/cert.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    location /img/ {
+        proxy_pass http://${RENDER_SERVER_HOST}:8080/img;
+    }
+}

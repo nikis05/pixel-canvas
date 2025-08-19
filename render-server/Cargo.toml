@@ -1,0 +1,24 @@
+[package]
+name = "render-server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.98"
+axum = "0.8.4"
+base64 = "0.22.1"
+bitvec = "1.0.1"
+bytes = "1.10.1"
+envy = "0.4.2"
+fork_stream = "0.1.0"
+futures = "0.3.31"
+image = "0.25.6"
+itertools = "0.14.0"
+phf = { version = "0.12.1", features = ["macros"] }
+rayon = "1.10.0"
+rust-s3 = "0.35.1"
+sentry = { version = "0.41.0", features = ["anyhow"] }
+serde = { version = "1.0.219", features = ["derive"] }
+tokio = { version = "1.47.0", features = ["full"] }
+tokio-rayon = "2.1.0"
+tokio-stream = "0.1.17"

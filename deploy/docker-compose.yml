@@ -1,0 +1,70 @@
+services:
+    render-server:
+        image: ${DOCKERHUB_REGISTRY}/canvas-render-server:${APP_VERSION}
+        expose:
+            - "8080"
+        environment:
+            PORT: 8080
+            APP_VERSION: $APP_VERSION
+            SENTRY_DSN: $SENTRY_DSN
+            S3_ENDPOINT: $S3_ENDPOINT
+            S3_REGION: $S3_REGION
+            S3_ACCESS_KEY: $S3_ACCESS_KEY
+        deploy:
+            mode: replicated
+            replicas: 3
+            restart_policy:
+                condition: always
+                delay: 5s
+                max_attempts: 3
+                window: 5s
+            update_config:
+                parallelism: 2
+                delay: 5s
+                failure_action: rollback
+                monitor: 5s
+                order: start-first
+            rollback_config:
+                parallelism: 2
+                delay: 5s
+                failure_action: rollback
+                monitor: 5s
+                order: start-first
+    gateway:
+        image: nginx:latest
+        volumes:
+            - /usr/share/tg-canvas/nginx/templates:/etc/nginx/templates:ro
+        environment:
+            - RENDER_SERVER_HOST=render-server
+        configS:
+            - source: cert
+              target: /etc/nginx/certs/cert.crt
+        secrets:
+            - source: cert-key
+              target: /etc/nginx/certs/cert.key
+        deploy:
+            mode: replicated
+            replicas: 3
+            restart_policy:
+                condition: always
+                delay: 5s
+                max_attempts: 3
+                window: 5s
+            update_config:
+                parallelism: 2
+                delay: 5s
+                failure_action: rollback
+                monitor: 5s
+                order: start-first
+            rollback_config:
+                parallelism: 2
+                delay: 5s
+                failure_action: rollback
+                monitor: 5s
+                order: start-first
+configs:
+    cert:
+        content: $CERT
+secrets:
+    cert-key:
+        environment: CERT_KEY

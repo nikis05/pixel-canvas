@@ -1,0 +1,55 @@
+on:
+  push:
+    branches: [master]
+jobs:
+  fender-server:
+    name: Deploy / Render server
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKERHUB_AUTH_REGISTRY }}
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push container
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ${{ env.DOCKERHUB_REGISTRY }}/canvas-render-server:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache,mode=max
+      - name: Upload configs
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ env.HOST }}
+          username: ${{ env.USER }}
+          key: ${{ secrets.KEY }}
+          fingerprint: ${{ secrets.FINGERPRINT }}
+          source: ./deploy/docker-compose.yml ./deploy/nginx
+          target: usr/share/pixel-canvas/
+      - name: Rollout
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ env.HOST }}
+          username: ${{ env.USER }}
+          key: ${{ secrets.KEY }}
+          fingerprint: ${{ secrets.FINGERPRINT }}
+          script: >
+            APP_VERSION=${{ github.sha }}
+            DOCKERHUB_REGISTRY=${{ env.DOCKERHUB_REGISTRY }}
+            CERT=${{ env.CERT }}
+            CERT_KEY=${{ secrets.CERT_KEY }}
+            SENTRY_DSN=${{ env.SENTRY_DSN }}
+            S3_ENDPOINT=${{ env.S3_ENDPOINT }}
+            S3_REGION=${{ env.S3_REGION }}
+            S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }}
+            docker login
+             -u ${{ secrets.DOCKERHUB_USER }}
+             -p ${{ secrets.DOCKERHUB_TOKEN }}
+             registry.digitalocean.com
+            && cd usr/share/pixel-canvas
+            && docker-compose pull
+            && docker compose up -d --remove-orphans
+            && docker image prune
