@@ -33,7 +33,8 @@ jobs:
           host: ${{ vars.HOST }}
           username: ${{ vars.USER }}
           key: ${{ secrets.KEY }}
-          fingerprint: ${{ secrets.FINGERPRINT }}
+          fingerprint: ${{ vars.FINGERPRINT }}
+          debug: true
           source: "./deploy/docker-compose.yml,./deploy/nginx"
           target: usr/share/pixel-canvas/
       - name: Rollout
