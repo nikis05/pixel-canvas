@@ -34,7 +34,7 @@ jobs:
           username: ${{ vars.USER }}
           key: ${{ secrets.KEY }}
           fingerprint: ${{ secrets.FINGERPRINT }}
-          source: ./deploy/docker-compose.yml ./deploy/nginx
+          source: "./deploy/docker-compose.yml,./deploy/nginx"
           target: usr/share/pixel-canvas/
       - name: Rollout
         uses: appleboy/ssh-action@v1
