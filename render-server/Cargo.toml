@@ -15,10 +15,8 @@ futures = "0.3.31"
 image = "0.25.6"
 itertools = "0.14.0"
 phf = { version = "0.12.1", features = ["macros"] }
-rayon = "1.10.0"
 rust-s3 = "0.35.1"
 sentry = { version = "0.41.0", features = ["anyhow"] }
 serde = { version = "1.0.219", features = ["derive"] }
 tokio = { version = "1.47.0", features = ["full"] }
 tokio-rayon = "2.1.0"
-tokio-stream = "0.1.17"

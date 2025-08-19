@@ -2242,13 +2242,11 @@ dependencies = [
  "image",
  "itertools 0.14.0",
  "phf",
- "rayon",
  "rust-s3",
  "sentry",
  "serde",
  "tokio",
  "tokio-rayon",
- "tokio-stream",
 ]
 
 [[package]]
