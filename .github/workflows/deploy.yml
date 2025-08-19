@@ -31,9 +31,9 @@ jobs:
         uses: appleboy/scp-action@v1
         with:
           host: ${{ vars.HOST }}
-          username: ${{ vars.USER }}
-          key: ${{ secrets.KEY }}
-          fingerprint: ${{ vars.FINGERPRINT }}
+          username: ${{ vars.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          fingerprint: ${{ vars.SSH_FINGERPRINT }}
           source: "./deploy/docker-compose.yml,./deploy/nginx"
           target: usr/share/pixel-canvas/
       - name: Rollout
