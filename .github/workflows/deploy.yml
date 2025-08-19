@@ -14,6 +14,11 @@ jobs:
           registry: ${{ env.DOCKERHUB_AUTH_REGISTRY }}
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            render-server
+            deploy
       - name: Build and push container
         uses: docker/build-push-action@v6
         with:

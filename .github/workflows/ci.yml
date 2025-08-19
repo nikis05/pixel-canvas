@@ -6,16 +6,14 @@ jobs:
     name: CI / Render server
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v5
-        with:
-          sparse-checkout: render-server
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           components: rustfmt, clippy
-      - name: Checkout
-        run: 
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: render-server
       - name: Clippy
         run: cd render-server && cargo clippy --locked
       - name: Rustfmt
