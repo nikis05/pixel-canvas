@@ -17,4 +17,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-features
       - name: Rustfmt
-        run: cd render-server && rustfmt --check
+        run: cd render-server && cargo fmt --check
