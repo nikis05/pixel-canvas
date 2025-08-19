@@ -40,9 +40,9 @@ jobs:
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ vars.HOST }}
-          username: ${{ vars.USER }}
-          key: ${{ secrets.KEY }}
-          fingerprint: ${{ secrets.FINGERPRINT }}
+          username: ${{ vars.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          fingerprint: ${{ secrets.SSH_FINGERPRINT }}
           script: >
             APP_VERSION=${{ github.sha }}
             DOCKERHUB_REGISTRY=${{ vars.DOCKERHUB_REGISTRY }}
