@@ -1,10 +1,10 @@
 on:
   pull_request:
-    branches: [master]
+    branches: [main]
 jobs:
   render-server:
     name: CI / Render server
-    runs-on: debian:latest
+    runs-on: self-hosted
     steps:
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
