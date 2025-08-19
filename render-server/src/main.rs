@@ -39,6 +39,8 @@ async fn main() {
             sentry::ClientOptions {
                 send_default_pii: true,
                 release: env.app_version.map(Into::into),
+                ..Default::default()        
+                         
             },
         )));
     }
