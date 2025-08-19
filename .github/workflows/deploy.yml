@@ -29,12 +29,12 @@ jobs:
           cache-to: type=registry,ref=${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache,mode=max
       - name: Upload configs
         run: >
-          echo ${{ secrets.SSH_KEY }} | scp -i /dev/stdin
+          echo "${{ secrets.SSH_KEY }}" | scp -i /dev/stdin
           ./deploy/docker-compose.yml ./deploy/nginx
           ${{ vars.SSH_USER }}@${{ vars.HOST }}:/usr/share/pixel-canvas/
       - name: Rollout
         run: >
-          echo ${{ secrets.SSH_KEY }} | ssh -i /dev/stdin ${{ vars.SSH_USER }}@${{ vars.HOST }} '
+          echo "${{ secrets.SSH_KEY }}" | ssh -i /dev/stdin ${{ vars.SSH_USER }}@${{ vars.HOST }} '
           APP_VERSION=${{ github.sha }}
           DOCKERHUB_REGISTRY=${{ vars.DOCKERHUB_REGISTRY }}
           CERT=${{ vars.CERT }}
