@@ -1,0 +1,27 @@
+on:
+  push:
+    branches: [main]
+jobs:
+  cache-render-server:
+    name: Cache / Render server
+    runs-on: self-hosted
+    steps:
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: render-server
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            render-server/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Clippy
+        run: cd render-server && cargo clippy --locked
