@@ -11,7 +11,7 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.DOCKERHUB_AUTH_REGISTRY }}
+          registry: ${{ vars.DOCKERHUB_AUTH_REGISTRY }}
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - uses: actions/checkout@v5
@@ -23,14 +23,14 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ env.DOCKERHUB_REGISTRY }}/canvas-render-server:${{ github.sha }}
-          cache-from: type=registry,ref=${{ env.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache
-          cache-to: type=registry,ref=${{ env.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache,mode=max
+          tags: ${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:${{ github.sha }}
+          cache-from: type=registry,ref=${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache
+          cache-to: type=registry,ref=${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache,mode=max
       - name: Upload configs
         uses: appleboy/scp-action@v1
         with:
-          host: ${{ env.HOST }}
-          username: ${{ env.USER }}
+          host: ${{ vars.HOST }}
+          username: ${{ vars.USER }}
           key: ${{ secrets.KEY }}
           fingerprint: ${{ secrets.FINGERPRINT }}
           source: ./deploy/docker-compose.yml ./deploy/nginx
@@ -38,18 +38,18 @@ jobs:
       - name: Rollout
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ env.HOST }}
-          username: ${{ env.USER }}
+          host: ${{ vars.HOST }}
+          username: ${{ vars.USER }}
           key: ${{ secrets.KEY }}
           fingerprint: ${{ secrets.FINGERPRINT }}
           script: >
             APP_VERSION=${{ github.sha }}
-            DOCKERHUB_REGISTRY=${{ env.DOCKERHUB_REGISTRY }}
-            CERT=${{ env.CERT }}
+            DOCKERHUB_REGISTRY=${{ vars.DOCKERHUB_REGISTRY }}
+            CERT=${{ vars.CERT }}
             CERT_KEY=${{ secrets.CERT_KEY }}
-            SENTRY_DSN=${{ env.SENTRY_DSN }}
-            S3_ENDPOINT=${{ env.S3_ENDPOINT }}
-            S3_REGION=${{ env.S3_REGION }}
+            SENTRY_DSN=${{ vars.SENTRY_DSN }}
+            S3_ENDPOINT=${{ vars.S3_ENDPOINT }}
+            S3_REGION=${{ vars.S3_REGION }}
             S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }}
             docker login
              -u ${{ secrets.DOCKERHUB_USER }}
