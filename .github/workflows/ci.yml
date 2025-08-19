@@ -4,6 +4,7 @@ on:
 jobs:
   render-server:
     name: CI / Render server
+    runs-on: debian:latest
     steps:
       - name: Setup Rust
         uses: actions-rs/toolchain@v1

@@ -4,6 +4,7 @@ on:
 jobs:
   fender-server:
     name: Deploy / Render server
+    runs-on: debian:latest
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
