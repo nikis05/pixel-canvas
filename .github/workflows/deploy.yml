@@ -55,6 +55,6 @@ jobs:
             -p ${{ secrets.DOCKERHUB_TOKEN }}
             registry.digitalocean.com
             && cd usr/share/pixel-canvas
-            && docker-compose pull
+            && docker compose pull
             && docker compose up -d --remove-orphans
             && docker image prune
