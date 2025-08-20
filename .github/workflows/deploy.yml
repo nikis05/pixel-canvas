@@ -44,7 +44,7 @@ jobs:
           script: >
             APP_VERSION=${{ github.sha }}
             DOCKERHUB_REGISTRY=${{ vars.DOCKERHUB_REGISTRY }}
-            CERT=${{ vars.CERT }}
+            CERT="${{ vars.CERT }}"
             CERT_KEY=${{ secrets.CERT_KEY }}
             SENTRY_DSN=${{ vars.SENTRY_DSN }}
             S3_ENDPOINT=${{ vars.S3_ENDPOINT }}
