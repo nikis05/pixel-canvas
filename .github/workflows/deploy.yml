@@ -33,6 +33,7 @@ jobs:
           host: ${{ vars.HOST }}
           username: ${{ vars.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
+          fingerprint: ${{ vars.SSH_FINGERPRINT }}
           source: "./deploy/docker-compose.yml,./deploy/nginx"
           target: usr/share/pixel-canvas/
           debug: true
@@ -42,6 +43,7 @@ jobs:
           host: ${{ vars.HOST }}
           username: ${{ vars.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
+          fingerprint: ${{ vars.SSH_FINGERPRINT }}
           script: >
             APP_VERSION=${{ github.sha }}
             DOCKERHUB_REGISTRY=${{ vars.DOCKERHUB_REGISTRY }}
