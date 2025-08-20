@@ -34,7 +34,7 @@ jobs:
           username: ${{ vars.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           source: "./deploy/docker-compose.yml,./deploy/nginx"
-          target: usr/share/pixel-canvas/
+          target: /usr/share/pixel-canvas/
       - name: Rollout
         uses: appleboy/ssh-action@v1
         with:
@@ -54,7 +54,7 @@ jobs:
             -u ${{ secrets.DOCKERHUB_USER }}
             -p ${{ secrets.DOCKERHUB_TOKEN }}
             registry.digitalocean.com
-            && cd usr/share/pixel-canvas
+            && cd /usr/share/pixel-canvas
             && docker compose pull
             && docker compose up -d --remove-orphans
             && docker image prune
