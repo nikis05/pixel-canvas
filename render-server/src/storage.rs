@@ -25,13 +25,13 @@ impl Storage {
         &self,
         dna: &str,
     ) -> anyhow::Result<Option<impl Stream<Item = anyhow::Result<Bytes>> + 'static>> {
-        Ok(Some(
-            self.0
-                .get_object_stream(dna)
-                .await?
-                .bytes
-                .map_err(anyhow::Error::new),
-        ))
+        let result = self.0.get_object_stream(dna).await;
+
+        if let Err(s3::error::S3Error::HttpFailWithBody(404, _)) = result {
+            return Ok(None);
+        }
+
+        Ok(Some(result?.bytes.map_err(anyhow::Error::new)))
     }
 
     pub async fn put(&self, dna: &str, payload: Bytes) -> anyhow::Result<()> {
