@@ -23,6 +23,7 @@ RUN apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/v3.14/m
 COPY --from=builder /app/target/release/render-server /usr/local/bin
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD exec curl --fail http://localhost:$PORT/health
+ENV RUST_BACKTRACE=1
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
 CMD ["/usr/local/bin/render-server"]
