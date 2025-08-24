@@ -6,11 +6,6 @@ jobs:
     name: Cache / Render server
     runs-on: self-hosted
     steps:
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          components: rustfmt, clippy
       - uses: actions/cache/restore@v4
         id: lookup-cache
         with:
@@ -22,6 +17,12 @@ jobs:
             render-server/target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           lookup-only: true
+      - name: Setup Rust
+        if: steps.lookup-cache.outputs.cache-hit != 'true'
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
       - uses: actions/checkout@v5
         if: steps.lookup-cache.outputs.cache-hit != 'true'
         with:
