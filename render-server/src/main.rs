@@ -1,6 +1,9 @@
-#![warn(clippy::pedantic)]
-
-use crate::{render::Dna, storage::Storage};
+#![warn(clippy::pedantic, clippy::todo)]
+#![forbid(unused_must_use)]
+use crate::{
+    dna::Dna,
+    storage::{Path, Storage},
+};
 use axum::{
     Router,
     body::Body,
@@ -12,6 +15,7 @@ use futures::TryStreamExt;
 use serde::Deserialize;
 use std::str::FromStr;
 
+mod dna;
 mod render;
 mod storage;
 
@@ -61,9 +65,19 @@ async fn main() {
         .route(
             "/img",
             routing::get({
-                async move |dna: String| {
+                async move |raw_dna: String| {
+                    let dna = match Dna::from_str(&raw_dna) {
+                        Ok(parsed_dna) => parsed_dna,
+                        Err(err) => {
+                            capture_error(&err);
+                            return (StatusCode::BAD_REQUEST, "Invalid DNA").into_response();
+                        }
+                    };
+
+                    let path = Path::for_dna(&dna);
+
                     let existing_file = if let Some(storage) = &storage {
-                        match storage.get(&dna).await {
+                        match storage.get(&path).await {
                             Ok(existing_file) => existing_file,
                             Err(err) => {
                                 capture_error(&err);
@@ -89,22 +103,14 @@ async fn main() {
                             .into_response();
                     }
 
-                    let parsed_dna = match Dna::from_str(&dna) {
-                        Ok(parsed_dna) => parsed_dna,
-                        Err(err) => {
-                            capture_error(&err);
-                            return (StatusCode::BAD_REQUEST, "Invalid DNA").into_response();
-                        }
-                    };
-
-                    let file = Box::pin(render::render(parsed_dna)).await;
+                    let file = Box::pin(render::render(dna)).await;
 
                     if let Some(storage) = storage {
                         tokio::spawn({
                             let file = file.clone();
                             let storage = storage.clone();
                             async move {
-                                if let Err(err) = storage.put(&dna, file).await {
+                                if let Err(err) = storage.put(&path, file).await {
                                     capture_error(&err);
                                 }
                             }
