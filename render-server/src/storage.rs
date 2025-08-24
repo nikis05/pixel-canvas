@@ -10,10 +10,15 @@ use std::sync::Arc;
 pub struct Storage(Arc<Bucket>);
 
 impl Storage {
-    pub fn new(s3_endpoint: String, s3_region: String, s3_access_key: &str) -> Self {
+    pub fn new(
+        s3_endpoint: String,
+        s3_region: String,
+        s3_access_key: &str,
+        s3_bucket_name: &str,
+    ) -> Self {
         Self(Arc::new(
             *Bucket::new(
-                "renders",
+                s3_bucket_name,
                 s3::Region::Custom {
                     endpoint: s3_endpoint,
                     region: s3_region,
