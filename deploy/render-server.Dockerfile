@@ -17,9 +17,11 @@ COPY ./render-server/src ./src/
 RUN cargo build --release --bin render-server
 
 FROM debian:bullseye-slim AS runtime
+ARG APP_VERSION
 RUN apt update
 RUN apt install -y curl
 COPY --from=builder /app/target/release/render-server /usr/local/bin
+ENV APP_VERSION=$APP_VERSION
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD exec curl --fail http://localhost:$PORT/health
 CMD ["/usr/local/bin/render-server"]

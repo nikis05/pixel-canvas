@@ -37,6 +37,7 @@ jobs:
             ~/.cargo/git/db/
             render-server/target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
       - name: Clippy
         if: steps.lookup-cache.outputs.cache-hit != 'true'
         run: cd render-server && cargo clippy --locked

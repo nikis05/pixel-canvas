@@ -23,6 +23,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           file: ./deploy/render-server.Dockerfile
+          build-args: APP_VERSION=${{ github.sha }}
           push: true
           tags: ${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:latest
           cache-from: type=registry,ref=${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache
