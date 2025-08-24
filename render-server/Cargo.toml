@@ -4,6 +4,16 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+sentry = { version = "0.41.0", default-features = false, features = [
+    "backtrace",
+    "contexts",
+    "anyhow",
+    "debug-images",
+    "panic",
+    "release-health",
+    "reqwest",
+    "rustls",
+] }
 anyhow = "1.0.98"
 axum = "0.8.4"
 base64 = "0.22.1"
@@ -15,8 +25,11 @@ futures = "0.3.31"
 image = "0.25.6"
 itertools = "0.14.0"
 phf = { version = "0.12.1", features = ["macros"] }
-rust-s3 = "0.35.1"
-sentry = { version = "0.41.0", features = ["anyhow"] }
+rust-s3 = { version = "0.35.1", default-features = false, features = [
+    "fail-on-err",
+    "tags",
+    "tokio-rustls-tls",
+] }
 serde = { version = "1.0.219", features = ["derive"] }
 tokio = { version = "1.47.0", features = ["full"] }
 tokio-rayon = "2.1.0"
