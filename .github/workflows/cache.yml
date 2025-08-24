@@ -15,6 +15,7 @@ jobs:
         with:
           sparse-checkout: render-server
       - uses: actions/cache@v4
+        id: cache
         with:
           path: |
             ~/.cargo/bin/
@@ -24,4 +25,5 @@ jobs:
             render-server/target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Clippy
+        if: steps.cache.outputs.cache-hit != 'true'
         run: cd render-server && cargo clippy --locked
