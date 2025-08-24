@@ -24,7 +24,7 @@ jobs:
         with:
           file: ./deploy/render-server.Dockerfile
           build-args: APP_VERSION=${{ github.sha }}
-          platform: linux/amd64
+          platforms: linux/amd64
           push: true
           tags: ${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:latest
           cache-from: type=registry,ref=${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache
