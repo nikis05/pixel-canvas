@@ -34,7 +34,7 @@ impl Storage {
         ))
     }
 
-    pub async fn post(&self, dna: &str, payload: Bytes) -> anyhow::Result<()> {
+    pub async fn put(&self, dna: &str, payload: Bytes) -> anyhow::Result<()> {
         self.0.put_object(dna, &payload).await?;
         Ok(())
     }

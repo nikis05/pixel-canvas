@@ -4,13 +4,11 @@ use crate::{render::Dna, storage::Storage};
 use axum::{
     Router,
     body::Body,
-    extract,
     http::{StatusCode, header},
     response::IntoResponse,
     routing::{self},
 };
 use futures::TryStreamExt;
-use sentry::integrations::anyhow::capture_anyhow;
 use serde::Deserialize;
 use std::str::FromStr;
 
@@ -25,6 +23,11 @@ struct Env {
     s3_endpoint: Option<String>,
     s3_region: Option<String>,
     s3_access_key: Option<String>,
+}
+
+fn capture_error(err: &anyhow::Error) {
+    sentry::integrations::anyhow::capture_anyhow(err);
+    eprintln!("{err}");
 }
 
 #[tokio::main]
@@ -56,14 +59,14 @@ async fn main() {
 
     let app = Router::new()
         .route(
-            "/img/{dna}",
+            "/img",
             routing::get({
-                async move |extract::Path(dna): extract::Path<String>| {
+                async move |dna: String| {
                     let existing_file = if let Some(storage) = &storage {
                         match storage.get(&dna).await {
                             Ok(existing_file) => existing_file,
                             Err(err) => {
-                                sentry::integrations::anyhow::capture_anyhow(&err);
+                                capture_error(&err);
                                 return (
                                     StatusCode::SERVICE_UNAVAILABLE,
                                     "Service Temporarily Unavailable",
@@ -79,7 +82,7 @@ async fn main() {
                         return (
                             [(header::CONTENT_TYPE, "image/png")],
                             Body::from_stream(stream.map_err(|err| {
-                                capture_anyhow(&err);
+                                capture_error(&err);
                                 anyhow::Error::msg("Internal Error")
                             })),
                         )
@@ -89,7 +92,7 @@ async fn main() {
                     let parsed_dna = match Dna::from_str(&dna) {
                         Ok(parsed_dna) => parsed_dna,
                         Err(err) => {
-                            capture_anyhow(&err);
+                            capture_error(&err);
                             return (StatusCode::BAD_REQUEST, "Invalid DNA").into_response();
                         }
                     };
@@ -101,8 +104,8 @@ async fn main() {
                             let file = file.clone();
                             let storage = storage.clone();
                             async move {
-                                if let Err(err) = storage.post(&dna, file).await {
-                                    capture_anyhow(&err);
+                                if let Err(err) = storage.put(&dna, file).await {
+                                    capture_error(&err);
                                 }
                             }
                         });
@@ -117,6 +120,8 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", env.port))
         .await
         .unwrap();
+
+    println!("Render server is started, listening to requests...");
 
     axum::serve(listener, app).await.unwrap();
 
