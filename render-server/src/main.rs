@@ -27,6 +27,7 @@ struct Env {
     s3_endpoint: Option<String>,
     s3_region: Option<String>,
     s3_access_key: Option<String>,
+    s3_bucket_name: Option<String>,
 }
 
 fn capture_error(err: &anyhow::Error) {
@@ -58,6 +59,7 @@ async fn main() {
             s3_endpoint,
             env.s3_region.unwrap(),
             &env.s3_access_key.unwrap(),
+            &env.s3_bucket_name.unwrap(),
         ));
     }
 
