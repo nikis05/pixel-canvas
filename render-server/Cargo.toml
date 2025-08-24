@@ -18,5 +18,6 @@ phf = { version = "0.12.1", features = ["macros"] }
 rust-s3 = "0.35.1"
 sentry = { version = "0.41.0", features = ["anyhow"] }
 serde = { version = "1.0.219", features = ["derive"] }
+sha2 = "0.10.9"
 tokio = { version = "1.47.0", features = ["full"] }
 tokio-rayon = "2.1.0"

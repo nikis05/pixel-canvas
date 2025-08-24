@@ -2245,6 +2245,7 @@ dependencies = [
  "rust-s3",
  "sentry",
  "serde",
+ "sha2",
  "tokio",
  "tokio-rayon",
 ]
