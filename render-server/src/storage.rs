@@ -14,6 +14,7 @@ impl Storage {
         s3_endpoint: String,
         s3_region: String,
         s3_access_key: &str,
+        s3_secret_key: &str,
         s3_bucket_name: &str,
     ) -> Self {
         Self(Arc::new(
@@ -23,7 +24,14 @@ impl Storage {
                     endpoint: s3_endpoint,
                     region: s3_region,
                 },
-                s3::creds::Credentials::new(Some(s3_access_key), None, None, None, None).unwrap(),
+                s3::creds::Credentials::new(
+                    Some(s3_access_key),
+                    Some(s3_secret_key),
+                    None,
+                    None,
+                    None,
+                )
+                .unwrap(),
             )
             .unwrap(),
         ))
