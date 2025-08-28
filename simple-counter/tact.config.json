@@ -10,6 +10,56 @@
         "external": false
       },
       "mode": "full"
+    },
+    {
+      "name": "Canvas",
+      "path": "contracts/canvas.tact",
+      "output": "build/Canvas",
+      "options": {
+        "debug": false,
+        "external": false
+      },
+      "mode": "full"
+    },
+    {
+      "name": "Collection",
+      "path": "contracts/collection.tact",
+      "output": "build/Collection",
+      "options": {
+        "debug": false,
+        "external": false
+      },
+      "mode": "full"
+    },
+    {
+      "name": "Item",
+      "path": "contracts/item.tact",
+      "output": "build/Item",
+      "options": {
+        "debug": false,
+        "external": false
+      },
+      "mode": "full"
+    },
+    {
+      "name": "Claim",
+      "path": "contracts/claim.tact",
+      "output": "build/Claim",
+      "options": {
+        "debug": false,
+        "external": false
+      },
+      "mode": "full"
+    },
+    {
+      "name": "Store",
+      "path": "contracts/store.tact",
+      "output": "build/Store",
+      "options": {
+        "debug": false,
+        "external": false
+      },
+      "mode": "full"
     }
   ]
 }
