@@ -1,3 +1,5 @@
+const DESCRIPTION: String = "An NFT art created via PixelCanvas";
+
 contract Item {
     collectionAddress: Address;
     itemIndex: Int;
@@ -16,59 +18,121 @@ contract Item {
         let sender: Address = sender();
         let coinsRemaining: Int = myBalance();
         let forwardFee = context().readForwardFee();
-        if (msg.forward_amount > 0) {
-            coinsRemaining -= (msg.forward_amount + forwardFee);
+        if (msg.forwardAmount > 0) {
+            coinsRemaining -= (msg.forwardAmount + forwardFee);
         }
-        if (msg.response_destination != null) {
+        if (msg.responseDestination != null) {
             coinsRemaining -= forwardFee;
         }
         require(coinsRemaining >= ton("0.1"), "Insufficient contract balance");
         if (!self.is_initialized) {
             require(sender == collection_address, "Not yet initialized");
             self.isInitialized = true;
-            self.spec = ItemSpec.fromCell(msg.custom_payload);
+            self.spec = ItemSpec.fromCell(msg.customPayload);
+            self.imageUrl = data.imageUrl;
         } else {
             require(sender == self.owner, "Not the owner");
         }
-        self.owner = msg.new_owner;
-        if (msg.forward_amount > 0) {
+        self.owner = msg.newOwner;
+        if (msg.forwardAmount > 0) {
             message(SendParameters {
-                to: msg.new_owner,
-                value: msg.forward_amount,
+                to: msg.newOwner,
+                value: msg.forwardAmount,
                 mode: SendPayGasSeparately,
                 bounce: true,
                 body: OwnershipAssigned {
-                    query_id: msg.query_id,
-                    prev_owner: sender,
-                    forward_payload: msg.forward_payload,
+                    queryId: msg.queryId,
+                    prevOwner: sender,
+                    forwardPayload: msg.forwardPayload,
                 }.toCell(),
             });
         }
-        if (msg.response_destination) {
+        if (msg.responseDestination) {
             message(MessageParameters {
-                to: msg.response_destination,
+                to: msg.responseDestination,
                 value: coinsRemaining,
                 mode: SendPayGasSeparately,
                 bounce: true,
-                body: Excesses {},
+                body: Excesses {
+                    queryId: msg.queryId,
+                },
             });
         }
+    }
+
+    receive(msg: GetStaticData) {
+        send(SendParameters {
+            to: sender(),
+            value: 0,
+            mode: SendRemainingValue,
+            bounce: true,
+            body: ReportStaticData {
+                queryId: msg.queryId,
+                indexId: self.itemIndex,
+                collection: self.collectionAddress,
+            }.toCell(),
+        });
+    }
+
+    get fun get_nft_data() {
+        return GetNftData {
+            isInitialized: self.isInitialized,
+            index: self.itemIndex,
+            collectionAddress: self.collectionAddress,
+            ownerAddress: self.owner,
+            individualContent: emptyCell(),
+        };
+    }
+
+    receive(msg: RefreshImageUrl) {
+        require(sender() == self.collectionAddress);
+        self.imageUrl = msg.newUrl;
     }
 }
 
 message(0x5fcc3d14) Transfer {
-    query_id: Int as uint64;
-    new_owner: Address;
-    response_destination: Address?;
-    custom_payload: Cell?;
-    forward_amount: Int as coins;
-    forward_payload: Slice as remaining;
+    queryId: Int as uint64;
+    newOwner: Address;
+    responseDestination: Address?;
+    customPayload: Cell?;
+    forwardAmount: Int as coins;
+    forwardPayload: Slice as remaining;
 }
 
-message Excesses {}
+message(0x05138d91) OwnershipAssigned {
+    queryId: Int as uint64;
+    prevOwner: Address;
+    forwardPayload: Slice as remaining;
+}
+
+message(0xd53276db) Excesses {
+    queryId: Int as uint64;
+}
+
+message(0x2fcb26a2) GetStaticData {
+    queryId: Int as uint64;
+}
+
+message(0x8b771735) ReportStaticData {
+    queryId: Int as uint64;
+    indexId: Int;
+    collection: Address;
+}
+
+message RefreshImageUrl {
+    newUrl: String;
+}
 
 struct ItemSpec {
     title: String;
     artist: String;
     dna: Cell;
+}
+
+struct GetNftData {
+    isInitialized: Bool;
+    index: Int;
+    collectionAddress: Address;
+    ownerAddress: Address;
+    individualContent: Cell;
 }

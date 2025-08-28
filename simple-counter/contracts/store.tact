@@ -11,7 +11,8 @@ contract Store(owner: Address, collection: Address) with SafeTransferable {
 
         message(MessageParameters {
             to: self.collection,
-            value: afterMessage(),
+            value: 0,
+            mode: SendRemainingValue,
             bounce: true,
             body: Mint {
                 recipient: sender(),
@@ -23,7 +24,8 @@ contract Store(owner: Address, collection: Address) with SafeTransferable {
     bounced(msg: bounced<Mint>) {
         message(MessageParameters {
             to: msg.recipient,
-            value: afterMessage(),
+            value: 0,
+            mode: SendRemainingValue,
             bounce: true,
             body: FailedPurchase {},
         });
