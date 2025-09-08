@@ -1,5 +1,8 @@
+import "@stdlib/ownable";
+
 trait SafeTransferable with Ownable {
-    pendingOwnershipTransfer: Address? = null;
+    owner: Address;
+    pendingOwnershipTransfer: Address?;
 
     receive(msg: TransferOwnership) {
         let sender: Address = sender();

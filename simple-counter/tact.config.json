@@ -1,20 +1,11 @@
 {
   "$schema": "https://raw.githubusercontent.com/tact-lang/tact/main/src/config/configSchema.json",
+  "debug": true,
   "projects": [
     {
       "name": "SimpleCounter",
       "path": "contracts/simple_counter.tact",
       "output": "build/SimpleCounter",
-      "options": {
-        "debug": false,
-        "external": false
-      },
-      "mode": "full"
-    },
-    {
-      "name": "Canvas",
-      "path": "contracts/canvas.tact",
-      "output": "build/Canvas",
       "options": {
         "debug": false,
         "external": false

@@ -1,61 +1,88 @@
 import "./claim.tact";
 import "./item.tact";
 import "./safe_transferable.tact";
-import "./utils.tact";
 
-contract Collection(
-    owner: Address,
-    imageUrl: String,
-    collectionContent: Cell,
-) with SafeTransferable {
-    nextItemIndex: Int as uint16 = 0;
-    minters: map<Address, Void> = emptyMap();
+contract Collection with SafeTransferable {
+    owner: Address;
+
+    maxTonkens: Int as uint32;
+    imageUrl: String;
+    description: String;
+    collectionContent: Cell;
+
+    initialized: Bool = false;
+
     pendingOwnershipTransfer: Address? = null;
+    minter: Address?;
+    nextItemIndex: Int as uint32 = 0;
+    numPendingClaims: Int as uint32 = 0;
 
-    receive(msg: AddMinter) {
-        let sender: Address = sender();
-        self.requireOwner();
-        self.minters.set(msg.minterAddress, Void {});
-        cashback(sender);
+    init(maxTokens: Int, imageUrl: String, description: String, collectionContent: Cell) {
+        self.owner = sender();
+        self.maxTonkens = maxTokens;
+        self.imageUrl = imageUrl;
+        self.description = description;
+        self.collectionContent = collectionContent;
     }
 
-    receive(msg: RemoveMinter) {
-        let sender: Address = sender();
+    receive() {
+        if (self.initialized) {
+            return;
+        }
+        self.initialized = true;
+        message(MessageParameters {
+            to: sender(),
+            value: afterReserve(),
+            bounce: true,
+        });
+    }
+
+    receive(msg: SetMinter) {
         self.requireOwner();
-        self.minters.del(msg.minterAddress, Void {});
-        cashback(sender);
+        self.minter = msg.minterAddress;
+    }
+
+    receive(msg: SetDisplaySettings) {
+        self.requireOwner();
+        self.imageUrl = msg.imageUrl;
+        self.description = msg.description;
     }
 
     receive(msg: Mint) {
         let sender: Address = sender();
-        require(self.minters.exists(sender), "Not a minter");
-        require(self.nextItemIndex <= 100000, "Tokens sold out");
-        require(stringLength(msg.title) <= 60, "Title too long");
-        require(stringLength(msg.artist) <= 60, "Artist too long");
-        require(validateDna(msg.data), "Invalid DNA");
+        require(self.minter == sender, "Not a minter");
+        require((self.nextItemIndex + self.numPendingClaims) < self.maxTonkens, "Tokens sold out");
+        require(stringLength(msg.itemCreateData.spec.title) <= 32, "Title too long");
+        require(stringLength(msg.itemCreateData.spec.artist) <= 32, "Artist too long");
+        require(validateDna(msg.itemCreateData.spec.dna), "Invalid DNA");
 
-        let dnaHash: String = msg.spec.toCell().hash();
+        let dnaHash: Int = msg.itemCreateData.spec.dna.hash();
+        let claimInit: StateInit = initOf Claim(myAddress(), dnaHash);
+
+        self.numPendingClaims += 1;
+
         send(SendParameters {
-            to: contractAddress(initOf Claim(myAddress(), dnaHash)),
+            to: contractAddress(claimInit),
             code: codeOf Claim,
-            data: dnaHash,
+            data: claimInit.data,
             value: 0,
             mode: SendRemainingValue,
             bounce: true,
             body: ClaimMessage {
+                id: msg.id,
                 successCallbackAddress: myAddress(),
                 successCallbackData: SuccessCallbackData {
-                    minter: sender,
                     recipient: msg.recipient,
-                    spec: msg.spec,
+                    itemCreateData: msg.itemCreateData,
                 }.toCell(),
-            },
+            }.toCell(),
         });
     }
 
     receive(msg: ClaimSuccess) {
-        require(sender() == contractAddress(Claim(myAddress(), msg.subject)), "Wrong sender");
-        let data: SuccessCallbackData = SuccessCallbackData.fromCell(msg.callbackData);
+        require(sender() == contractAddress(initOf Claim(myAddress(), msg.subject)), "Wrong sender");
+        self.numPendingClaims -= 1;
+        let data: SuccessCallbackData = SuccessCallbackData.fromCell(msg.data);
         deploy(DeployParameters {
             init: initOf Item(myAddress(), self.nextItemIndex),
             value: ton("0.2"),
@@ -64,42 +91,32 @@ contract Collection(
                 queryId: 0,
                 newOwner: data.recipient,
                 responseDestination: null,
-                customPayload: data.itemData.toCell(),
+                customPayload: data.itemCreateData.toCell(),
                 forwardAmount: ton("0.05"),
                 forwardPayload: emptySlice(),
-            },
+            }.toCell(),
         });
         self.nextItemIndex += 1;
         message(MessageParameters {
-            to: data.minter,
+            to: self.minter!!,
             value: afterReserve() - ton("0.2"),
             bounce: false,
-            body: Revenue {},
+            body: SuccessfulMinting {
+                id: idFromDna(msg.subject),
+            }.toCell(),
         });
     }
 
     bounced(msg: bounced<ClaimMessage>) {
-        let data: SuccessCallbackData = SuccessCallbackData.fromCell(msg.successCallbackData);
+        self.numPendingClaims -= 1;
         message(MessageParameters {
-            to: self.minterAddress,
+            to: self.minter!!,
             value: 0,
             mode: SendRemainingValue,
             bounce: false,
-            body: ClaimFailure {
-                recipient: data.recipient,
-            },
-        });
-    }
-
-    receive(msg: RefreshItemImageUrl) {
-        message(MessageParameters {
-            to: contractAddress(initOf Item(myAddress(), msg.itemIndex)),
-            value: 0,
-            mode: SendRemainingValue,
-            bounce: true,
-            body: RefreshImageUrl {
-                newUrl: self.imageUrl,
-            },
+            body: FailedMinting {
+                id: msg.id,
+            }.toCell(),
         });
     }
 
@@ -115,22 +132,23 @@ contract Collection(
         return contractAddress(initOf Item(myAddress(), item_index));
     }
 
-    get fun get_nft_content(index: Int, individual_content: Cell) {
+    get fun get_nft_content(index: Int, individual_content: Cell): NftContent {
+        let titleArtist = TitleArtist.fromCell(individual_content);
         let fullName: StringBuilder = beginString();
         fullName.append("\"");
-        fullName.append(self.spec.title);
+        fullName.append(titleArtist.title);
         fullName.append("\"");
         fullName.append(" by ");
-        fullName.append(self.spec.artist);
+        fullName.append(titleArtist.artist);
 
         let image: StringBuilder = beginString();
         image.append(self.imageUrl);
-        image.append(index);
+        image.append(index.toString());
 
-        let individualContent: map<Int, String> = emptyMap();
-        individualContent.insert(sha256("name"), fullName.toString());
-        individualContent.insert(sha256("description"), DESCRIPTION);
-        individualContent.insert(sha256("image"), image.toString());
+        let individualContent: map<Int, Cell> = emptyMap();
+        individualContent.set(sha256("name"), fullName.toCell());
+        individualContent.set(sha256("description"), self.description.asSlice().asCell());
+        individualContent.set(sha256("image"), image.toCell());
 
         return NftContent {
             firstByte: 0x01,
@@ -139,27 +157,32 @@ contract Collection(
     }
 }
 
-message AddMinter { minterAddress: Address }
+message SetMinter { minterAddress: Address }
+
+message SetDisplaySettings {
+    imageUrl: String;
+    description: String;
+}
+
+message RemoveMinter { minterAddress: Address }
 
 message Mint {
+    id: Int as uint224;
     recipient: Address;
-    spec: ItemSpec;
+    itemCreateData: ItemCreateData;
 }
 
-message ClaimFailure {
-    recipient: Address;
+message SuccessfulMinting {
+    id: Int as uint224;
 }
 
-message(0x46326bb3) Revenue {}
-
-message RefreshItemImageUrl { itemIndex: Int }
-
-struct Void {}
+message FailedMinting {
+    id: Int as uint224;
+}
 
 struct SuccessCallbackData {
-    minter: Address;
     recipient: Address;
-    spec: ItemSpec;
+    itemCreateData: ItemCreateData;
 }
 
 struct CollectionData {
@@ -169,8 +192,8 @@ struct CollectionData {
 }
 
 struct NftContent {
-    firstByte: Int as u8;
-    dictionary: map<Int, String>;
+    firstByte: Int as uint8;
+    dictionary: map<Int, Cell>;
 }
 
 inline fun afterReserve(): Int {
@@ -239,4 +262,8 @@ inline fun hasAllRefs(slice: Slice): Bool {
 
 inline fun hasNoRefs(slice: Slice): Bool {
     return slice.refs() == 0;
+}
+
+fun idFromDna(dna: Int): Int {
+    return dna & (pow2(224) - 1);
 }
