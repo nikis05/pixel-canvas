@@ -4,7 +4,7 @@ on:
     branches: [main]
 jobs:
   contracts:
-    name: contracts
+    name: Contracts
     runs-on: self-hosted
     steps:
       - name: Setup Node
