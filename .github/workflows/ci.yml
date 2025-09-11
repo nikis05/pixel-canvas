@@ -22,7 +22,7 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
-      - uses: Run tests
+      - name: Run tests
         run: cd contracts && npm blueprint test
   render-server:
     name: CI / Render server
