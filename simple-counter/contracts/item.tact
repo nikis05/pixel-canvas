@@ -28,7 +28,7 @@ contract Item with Issuable {
                 return;
             }
             self.initialized = true;
-            let itemCreateData = ItemCreateData.fromCell(msg.customPayload);
+            let itemCreateData = ItemCreateData.fromCell(msg.customPayload!!);
             self.spec = itemCreateData.spec;
             self.artistAddress = itemCreateData.artistAddress;
         } else {
@@ -92,6 +92,8 @@ contract Item with Issuable {
         });
     }
 
+    bounced(msg: Slice) {}
+
     get fun get_nft_data(): GetNftData {
         return GetNftData {
             isInitialized: self.initialized ? 1 : 0,
@@ -109,6 +111,10 @@ contract Item with Issuable {
 
     get fun artist_address(): Address? {
         return self.artistAddress;
+    }
+
+    get fun dna(): Cell? {
+        return self.spec != null ? self.spec!!.dna : null;
     }
 
     override inline fun issuer(): Address {

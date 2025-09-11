@@ -74,6 +74,7 @@ contract Collection with SafeTransferable {
                 successCallbackData: SuccessCallbackData {
                     recipient: msg.recipient,
                     itemCreateData: msg.itemCreateData,
+                    forwardPayloadCustom: msg.forwardPayloadCustom,
                 }.toCell(),
             }.toCell(),
         });
@@ -83,8 +84,9 @@ contract Collection with SafeTransferable {
         require(sender() == contractAddress(initOf Claim(myAddress(), msg.subject)), "Wrong sender");
         self.numPendingClaims -= 1;
         let data: SuccessCallbackData = SuccessCallbackData.fromCell(msg.data);
+        let itemIndex: Int = self.nextItemIndex;
         deploy(DeployParameters {
-            init: initOf Item(myAddress(), self.nextItemIndex),
+            init: initOf Item(myAddress(), itemIndex),
             value: ton("0.2"),
             bounce: false,
             body: Transfer {
@@ -93,7 +95,10 @@ contract Collection with SafeTransferable {
                 responseDestination: null,
                 customPayload: data.itemCreateData.toCell(),
                 forwardAmount: ton("0.05"),
-                forwardPayload: emptySlice(),
+                forwardPayload: MintForwardPayload {
+                    itemIndex,
+                    custom: data.forwardPayloadCustom,
+                }.toSlice(),
             }.toCell(),
         });
         self.nextItemIndex += 1;
@@ -124,12 +129,12 @@ contract Collection with SafeTransferable {
         return CollectionData {
             nextItemIndex: self.nextItemIndex,
             collectionContent: self.collectionContent,
-            ownerAddress: self.owner,
+            ownerAddress: self.owner.asSlice(),
         };
     }
 
-    get fun get_nft_address_by_index(item_index: Int): Address {
-        return contractAddress(initOf Item(myAddress(), item_index));
+    get fun get_nft_address_by_index(item_index: Int): Slice {
+        return contractAddress(initOf Item(myAddress(), item_index)).asSlice();
     }
 
     get fun get_nft_content(index: Int, individual_content: Cell): NftContent {
@@ -151,7 +156,7 @@ contract Collection with SafeTransferable {
         individualContent.set(sha256("image"), image.toCell());
 
         return NftContent {
-            firstByte: 0x01,
+            firstByte: 0x00,
             dictionary: individualContent,
         };
     }
@@ -170,6 +175,7 @@ message Mint {
     id: Int as uint224;
     recipient: Address;
     itemCreateData: ItemCreateData;
+    forwardPayloadCustom: Cell;
 }
 
 message SuccessfulMinting {
@@ -183,12 +189,18 @@ message FailedMinting {
 struct SuccessCallbackData {
     recipient: Address;
     itemCreateData: ItemCreateData;
+    forwardPayloadCustom: Cell;
+}
+
+struct MintForwardPayload {
+    itemIndex: Int as uint32;
+    custom: Cell;
 }
 
 struct CollectionData {
     nextItemIndex: Int;
     collectionContent: Cell;
-    ownerAddress: Address;
+    ownerAddress: Slice;
 }
 
 struct NftContent {
@@ -264,6 +276,6 @@ inline fun hasNoRefs(slice: Slice): Bool {
     return slice.refs() == 0;
 }
 
-fun idFromDna(dna: Int): Int {
+inline fun idFromDna(dna: Int): Int {
     return dna & (pow2(224) - 1);
 }

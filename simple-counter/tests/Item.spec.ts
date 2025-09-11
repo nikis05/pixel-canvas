@@ -19,6 +19,7 @@ describe('Item', () => {
     let artist: SandboxContract<TreasuryContract>;
     let item: SandboxContract<Item>;
     let customPayload: Cell;
+    const dna = new Builder().storeInt(2, 4).endCell();
 
     beforeEach(async () => {
         blockchain = await Blockchain.create();
@@ -40,7 +41,7 @@ describe('Item', () => {
                 $$type: 'ItemSpec',
                 artist: 'artist',
                 title: 'title',
-                dna: new Builder().storeInt(2, 4).endCell(),
+                dna,
             },
             artistAddress: artist.address,
         })(customPayloadBuilder);
@@ -716,6 +717,29 @@ describe('Item', () => {
 
             const artistAddress = await item.getArtistAddress();
             expect(artistAddress).toEqualAddress(artist.address);
+        });
+    });
+
+    describe('dna', () => {
+        it('returns DNA', async () => {
+            await item.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.2'),
+                },
+                {
+                    $$type: 'Transfer',
+                    queryId: BigInt(123),
+                    newOwner: owner.address,
+                    responseDestination: null,
+                    customPayload,
+                    forwardAmount: toNano(0),
+                    forwardPayload: Cell.EMPTY.asSlice(),
+                },
+            );
+
+            const returnedDna = await item.getDna();
+            expect(returnedDna).toEqualCell(dna);
         });
     });
 });

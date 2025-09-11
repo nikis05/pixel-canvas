@@ -1,21 +1,25 @@
 import { Blockchain, calcComputePhase, printTransactionFees, SandboxContract, TreasuryContract } from '@ton/sandbox';
-import { BitString, Builder, Cell, toNano, Transaction } from '@ton/core';
+import { BitString, Builder, Cell, Slice, toNano, Transaction } from '@ton/core';
 import { Collection, loadCollection$Data } from '../build/Collection/Collection_Collection';
 import '@ton/test-utils';
-import { getContractState, getTransactionFees } from './utils';
+import { getContractState, getTransactionFees, makeDna } from './utils';
 import { describe } from 'node:test';
-import { storeItemSpec, storeTitleArtist } from '../build/Item/Item_Item';
+import { Item, storeItemCreateData, storeItemSpec, storeTitleArtist, storeTransfer } from '../build/Item/Item_Item';
 import { sha256 } from '@ton/crypto';
-import { assert } from 'console';
-import { loadSuccessfulMinting } from '../build/Store/Store_Store';
+import assert from 'node:assert';
+import { loadFailedMinting, loadSuccessfulMinting, storeSuccessfulMinting } from '../build/Store/Store_Store';
 import { send } from 'process';
+import { cp } from 'fs';
+import { storeMintForwardPayload } from '../build/Collection/Collection_Claim';
 
 describe('Collection', () => {
     let blockchain: Blockchain;
     let deployer: SandboxContract<TreasuryContract>;
-    let collection: SandboxContract<Collection>;
     let minter: SandboxContract<TreasuryContract>;
     let artist: SandboxContract<TreasuryContract>;
+    let recipient: SandboxContract<TreasuryContract>;
+    let collection: SandboxContract<Collection>;
+    const collectionContent = new Builder().storeInt(2, 4).endCell();
 
     beforeEach(async () => {
         blockchain = await Blockchain.create();
@@ -26,8 +30,10 @@ describe('Collection', () => {
 
         artist = await blockchain.treasury('artist');
 
+        recipient = await blockchain.treasury('recipient');
+
         collection = blockchain.openContract(
-            await Collection.fromInit(BigInt(2), 'https://example.com', 'foo', new Builder().storeInt(2, 4).endCell()),
+            await Collection.fromInit(BigInt(2), 'https://example.com/', 'description', collectionContent),
         );
     });
 
@@ -107,7 +113,7 @@ describe('Collection', () => {
             const sendResult = await collection.send(
                 deployer.getSender(),
                 {
-                    value: toNano('0.1'),
+                    value: toNano('0.5'),
                 },
                 { $$type: 'SetMinter', minterAddress: minter.address },
             );
@@ -121,12 +127,12 @@ describe('Collection', () => {
             const mintResult = await collection.send(
                 minter.getSender(),
                 {
-                    value: toNano('0.1'),
+                    value: toNano('0.5'),
                 },
                 {
                     $$type: 'Mint',
                     id: BigInt(123),
-                    recipient: minter.address,
+                    recipient: recipient.address,
                     itemCreateData: {
                         $$type: 'ItemCreateData',
 
@@ -138,6 +144,7 @@ describe('Collection', () => {
                         },
                         artistAddress: artist.address,
                     },
+                    forwardPayloadCustom: Cell.EMPTY,
                 },
             );
 
@@ -161,7 +168,7 @@ describe('Collection', () => {
             const sendResult = await collection.send(
                 wrongSender.getSender(),
                 {
-                    value: toNano('0.1'),
+                    value: toNano('0.5'),
                 },
                 { $$type: 'SetMinter', minterAddress: minter.address },
             );
@@ -188,7 +195,7 @@ describe('Collection', () => {
             const sendResult = await collection.send(
                 deployer.getSender(),
                 {
-                    value: toNano('0.1'),
+                    value: toNano('0.5'),
                 },
                 {
                     $$type: 'SetDisplaySettings',
@@ -218,7 +225,7 @@ describe('Collection', () => {
 
             const imageKey = BigInt('0x' + (await sha256('image')).toString('hex'));
             const image = nftContent.dictionary.get(imageKey)?.beginParse().loadStringTail();
-            expect(image?.startsWith('https://new.example.com'));
+            expect(image?.startsWith('https://new.example.com/'));
         });
 
         it('throws if sender is not the owner', async () => {
@@ -234,11 +241,11 @@ describe('Collection', () => {
             const sendResult = await collection.send(
                 wrongSender.getSender(),
                 {
-                    value: toNano('0.1'),
+                    value: toNano('0.5'),
                 },
                 {
                     $$type: 'SetDisplaySettings',
-                    imageUrl: 'https://new.example.com',
+                    imageUrl: 'https://new.example.com/',
                     description: 'bar',
                 },
             );
@@ -266,12 +273,12 @@ describe('Collection', () => {
             const sendResult = await collection.send(
                 wrongSender.getSender(),
                 {
-                    value: toNano('0.1'),
+                    value: toNano('0.5'),
                 },
                 {
                     $$type: 'Mint',
                     id: BigInt(123),
-                    recipient: minter.address,
+                    recipient: recipient.address,
                     itemCreateData: {
                         $$type: 'ItemCreateData',
 
@@ -283,6 +290,7 @@ describe('Collection', () => {
                         },
                         artistAddress: artist.address,
                     },
+                    forwardPayloadCustom: Cell.EMPTY,
                 },
             );
 
@@ -298,7 +306,7 @@ describe('Collection', () => {
             await collection.send(
                 deployer.getSender(),
                 {
-                    value: toNano('0.1'),
+                    value: toNano('0.5'),
                 },
                 null,
             );
@@ -319,7 +327,7 @@ describe('Collection', () => {
                 {
                     $$type: 'Mint',
                     id: BigInt(123),
-                    recipient: minter.address,
+                    recipient: recipient.address,
                     itemCreateData: {
                         $$type: 'ItemCreateData',
 
@@ -331,6 +339,7 @@ describe('Collection', () => {
                         },
                         artistAddress: artist.address,
                     },
+                    forwardPayloadCustom: Cell.EMPTY,
                 },
             );
 
@@ -342,7 +351,7 @@ describe('Collection', () => {
                 {
                     $$type: 'Mint',
                     id: BigInt(456),
-                    recipient: minter.address,
+                    recipient: recipient.address,
                     itemCreateData: {
                         $$type: 'ItemCreateData',
 
@@ -354,6 +363,7 @@ describe('Collection', () => {
                         },
                         artistAddress: artist.address,
                     },
+                    forwardPayloadCustom: Cell.EMPTY,
                 },
             );
 
@@ -365,7 +375,7 @@ describe('Collection', () => {
                 {
                     $$type: 'Mint',
                     id: BigInt(789),
-                    recipient: minter.address,
+                    recipient: recipient.address,
                     itemCreateData: {
                         $$type: 'ItemCreateData',
 
@@ -377,6 +387,7 @@ describe('Collection', () => {
                         },
                         artistAddress: artist.address,
                     },
+                    forwardPayloadCustom: Cell.EMPTY,
                 },
             );
 
@@ -392,7 +403,7 @@ describe('Collection', () => {
             await collection.send(
                 deployer.getSender(),
                 {
-                    value: toNano('0.1'),
+                    value: toNano('0.5'),
                 },
                 null,
             );
@@ -413,7 +424,7 @@ describe('Collection', () => {
                 {
                     $$type: 'Mint',
                     id: BigInt(123),
-                    recipient: minter.address,
+                    recipient: recipient.address,
                     itemCreateData: {
                         $$type: 'ItemCreateData',
 
@@ -425,6 +436,7 @@ describe('Collection', () => {
                         },
                         artistAddress: artist.address,
                     },
+                    forwardPayloadCustom: Cell.EMPTY,
                 },
             );
 
@@ -440,7 +452,7 @@ describe('Collection', () => {
             await collection.send(
                 deployer.getSender(),
                 {
-                    value: toNano('0.1'),
+                    value: toNano('0.5'),
                 },
                 null,
             );
@@ -461,7 +473,7 @@ describe('Collection', () => {
                 {
                     $$type: 'Mint',
                     id: BigInt(123),
-                    recipient: minter.address,
+                    recipient: recipient.address,
                     itemCreateData: {
                         $$type: 'ItemCreateData',
 
@@ -473,6 +485,7 @@ describe('Collection', () => {
                         },
                         artistAddress: artist.address,
                     },
+                    forwardPayloadCustom: Cell.EMPTY,
                 },
             );
 
@@ -492,7 +505,7 @@ describe('Collection', () => {
                     await collection.send(
                         deployer.getSender(),
                         {
-                            value: toNano('0.1'),
+                            value: toNano('0.5'),
                         },
                         null,
                     );
@@ -513,7 +526,7 @@ describe('Collection', () => {
                         {
                             $$type: 'Mint',
                             id: BigInt(123),
-                            recipient: minter.address,
+                            recipient: recipient.address,
                             itemCreateData: {
                                 $$type: 'ItemCreateData',
 
@@ -525,6 +538,7 @@ describe('Collection', () => {
                                 },
                                 artistAddress: artist.address,
                             },
+                            forwardPayloadCustom: Cell.EMPTY,
                         },
                     );
 
@@ -565,115 +579,694 @@ describe('Collection', () => {
             );
         });
 
-        it.todo('if claim is successful, deploys an item and reports revenue');
+        it('if claim is successful, deploys an item and reports revenue', async () => {
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
 
-        it.todo('if claim is failed, reports failed claim');
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                { $$type: 'SetMinter', minterAddress: minter.address },
+            );
 
-        it.todo('correctly mints multiple items');
+            const dna = makeDna();
+
+            const itemCreateData = {
+                $$type: 'ItemCreateData' as const,
+                spec: {
+                    $$type: 'ItemSpec' as const,
+                    title: 'title',
+                    artist: 'artist',
+                    dna,
+                },
+                artistAddress: artist.address,
+            };
+
+            const sendResult = await collection.send(
+                minter.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'Mint',
+                    id: BigInt(999),
+                    recipient: recipient.address,
+                    itemCreateData,
+                    forwardPayloadCustom: Cell.EMPTY,
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: minter.address,
+                to: collection.address,
+                success: true,
+            });
+
+            const nftAddress = (await collection.getGetNftAddressByIndex(BigInt(0))).loadAddress();
+
+            const customPayload = new Builder();
+            storeItemCreateData(itemCreateData)(customPayload);
+
+            const forwardPayload = new Builder();
+            storeMintForwardPayload({ $$type: 'MintForwardPayload', itemIndex: BigInt(0), custom: Cell.EMPTY })(
+                forwardPayload,
+            );
+
+            const transfer = new Builder();
+            storeTransfer({
+                $$type: 'Transfer',
+                queryId: BigInt(0),
+                newOwner: recipient.address,
+                responseDestination: null,
+                customPayload: customPayload.endCell(),
+                forwardAmount: toNano('0.05'),
+                forwardPayload: forwardPayload.asSlice(),
+            })(transfer);
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: collection.address,
+                to: nftAddress,
+                deploy: true,
+                success: true,
+                body: transfer.endCell(),
+            });
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: collection.address,
+                to: minter.address,
+            });
+
+            const successfulMinting = loadSuccessfulMinting(sendResult.transactions[5].inMessage!.body.asSlice());
+            expect(successfulMinting.$$type).toBe('SuccessfulMinting');
+        });
+
+        it('sends specified forwardPayload', async () => {
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                { $$type: 'SetMinter', minterAddress: minter.address },
+            );
+
+            const dna = makeDna();
+
+            const itemCreateData = {
+                $$type: 'ItemCreateData' as const,
+                spec: {
+                    $$type: 'ItemSpec' as const,
+                    title: 'title',
+                    artist: 'artist',
+                    dna,
+                },
+                artistAddress: artist.address,
+            };
+
+            const sendResult = await collection.send(
+                minter.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'Mint',
+                    id: BigInt(999),
+                    recipient: recipient.address,
+                    itemCreateData,
+                    forwardPayloadCustom: new Builder().storeCoins(toNano('1')).endCell(),
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: minter.address,
+                to: collection.address,
+                success: true,
+            });
+
+            const nftAddress = (await collection.getGetNftAddressByIndex(BigInt(0))).loadAddress();
+
+            const customPayload = new Builder();
+            storeItemCreateData(itemCreateData)(customPayload);
+
+            const forwardPayload = new Builder();
+
+            storeMintForwardPayload({
+                $$type: 'MintForwardPayload',
+                itemIndex: BigInt(0),
+                custom: new Builder().storeCoins(toNano('1')).endCell(),
+            })(forwardPayload);
+
+            const transfer = new Builder();
+            storeTransfer({
+                $$type: 'Transfer',
+                queryId: BigInt(0),
+                newOwner: recipient.address,
+                responseDestination: null,
+                customPayload: customPayload.endCell(),
+                forwardAmount: toNano('0.05'),
+                forwardPayload: forwardPayload.asSlice(),
+            })(transfer);
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: collection.address,
+                to: nftAddress,
+                deploy: true,
+                success: true,
+                body: transfer.endCell(),
+            });
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: collection.address,
+                to: minter.address,
+            });
+
+            const successfulMinting = loadSuccessfulMinting(sendResult.transactions[5].inMessage!.body.asSlice());
+            expect(successfulMinting.$$type).toBe('SuccessfulMinting');
+        });
+
+        it('if claim is failed, reports failed claim', async () => {
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                { $$type: 'SetMinter', minterAddress: minter.address },
+            );
+
+            await collection.send(
+                minter.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'Mint',
+                    id: BigInt(123),
+                    recipient: recipient.address,
+                    itemCreateData: {
+                        $$type: 'ItemCreateData',
+
+                        spec: {
+                            $$type: 'ItemSpec',
+                            title: 'title',
+                            artist: 'artist',
+                            dna: makeDna(),
+                        },
+                        artistAddress: artist.address,
+                    },
+                    forwardPayloadCustom: Cell.EMPTY,
+                },
+            );
+
+            const sendResult = await collection.send(
+                minter.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'Mint',
+                    id: BigInt(456),
+                    recipient: recipient.address,
+                    itemCreateData: {
+                        $$type: 'ItemCreateData',
+
+                        spec: {
+                            $$type: 'ItemSpec',
+                            title: 'title',
+                            artist: 'artist',
+                            dna: makeDna(),
+                        },
+                        artistAddress: artist.address,
+                    },
+                    forwardPayloadCustom: Cell.EMPTY,
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: collection.address,
+                to: minter.address,
+            });
+
+            const failedMinting = loadFailedMinting(sendResult.transactions[4].inMessage!.body.asSlice());
+            expect(failedMinting.$$type).toBe('FailedMinting');
+        });
+
+        it('correctly mints multiple items', async () => {
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                { $$type: 'SetMinter', minterAddress: minter.address },
+            );
+
+            const itemCreateData1 = {
+                $$type: 'ItemCreateData' as const,
+
+                spec: {
+                    $$type: 'ItemSpec' as const,
+                    title: 'title',
+                    artist: 'artist',
+                    dna: makeDna(),
+                },
+                artistAddress: artist.address,
+            };
+
+            const sendResult1 = await collection.send(
+                minter.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'Mint',
+                    id: BigInt(123),
+                    recipient: recipient.address,
+                    itemCreateData: itemCreateData1,
+                    forwardPayloadCustom: Cell.EMPTY,
+                },
+            );
+
+            const itemCreateData2 = {
+                $$type: 'ItemCreateData' as const,
+
+                spec: {
+                    $$type: 'ItemSpec' as const,
+                    title: 'title',
+                    artist: 'artist',
+                    dna: makeDna({ fillWithOnes: true }),
+                },
+                artistAddress: artist.address,
+            };
+
+            const sendResult2 = await collection.send(
+                minter.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'Mint',
+                    id: BigInt(456),
+                    recipient: recipient.address,
+                    itemCreateData: itemCreateData2,
+                    forwardPayloadCustom: Cell.EMPTY,
+                },
+            );
+
+            expect(sendResult1.transactions).toHaveTransaction({
+                from: minter.address,
+                to: collection.address,
+                success: true,
+            });
+
+            const nftAddress1 = (await collection.getGetNftAddressByIndex(BigInt(0))).loadAddress();
+
+            const customPayload1 = new Builder();
+            storeItemCreateData(itemCreateData1)(customPayload1);
+
+            const forwardPayload1 = new Builder();
+            storeMintForwardPayload({ $$type: 'MintForwardPayload', itemIndex: BigInt(0), custom: Cell.EMPTY })(
+                forwardPayload1,
+            );
+
+            const transfer1 = new Builder();
+            storeTransfer({
+                $$type: 'Transfer',
+                queryId: BigInt(0),
+                newOwner: recipient.address,
+                responseDestination: null,
+                customPayload: customPayload1.endCell(),
+                forwardAmount: toNano('0.05'),
+                forwardPayload: forwardPayload1.asSlice(),
+            })(transfer1);
+
+            expect(sendResult1.transactions).toHaveTransaction({
+                from: collection.address,
+                to: nftAddress1,
+                deploy: true,
+                success: true,
+                body: transfer1.endCell(),
+            });
+
+            expect(sendResult1.transactions).toHaveTransaction({
+                from: minter.address,
+                to: collection.address,
+                success: true,
+            });
+
+            const nftAddress2 = (await collection.getGetNftAddressByIndex(BigInt(1))).loadAddress();
+
+            const customPayload2 = new Builder();
+            storeItemCreateData(itemCreateData2)(customPayload2);
+
+            const forwardPayload2 = new Builder();
+            storeMintForwardPayload({ $$type: 'MintForwardPayload', itemIndex: BigInt(1), custom: Cell.EMPTY })(
+                forwardPayload2,
+            );
+
+            const transfer2 = new Builder();
+            storeTransfer({
+                $$type: 'Transfer',
+                queryId: BigInt(0),
+                newOwner: recipient.address,
+                responseDestination: null,
+                customPayload: customPayload2.endCell(),
+                forwardAmount: toNano('0.05'),
+                forwardPayload: forwardPayload2.asSlice(),
+            })(transfer2);
+
+            expect(sendResult2.transactions).toHaveTransaction({
+                from: collection.address,
+                to: nftAddress2,
+                deploy: true,
+                success: true,
+                body: transfer2.endCell(),
+            });
+        });
     });
 
     describe('ClaimSuccess', () => {
-        it.todo('throws if not sent by the claim');
+        it('throws if not sent by the claim', async () => {
+            const wrongSender = await blockchain.treasury('wrongSender');
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            const sendResult = await collection.send(
+                wrongSender.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                { $$type: 'ClaimSuccess', subject: BigInt(0), data: Cell.EMPTY },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: wrongSender.address,
+                to: collection.address,
+                success: false,
+                exitCode: 61739,
+            });
+        });
     });
 
     describe('get_collection_data', () => {
-        it.todo('returns collection data');
+        it('returns collection data', async () => {
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            const collectionData = await collection.getGetCollectionData();
+            expect(collectionData.nextItemIndex).toBe(BigInt(0));
+            expect(collectionData.collectionContent).toEqualCell(collectionContent);
+            expect(collectionData.ownerAddress.loadAddress()).toEqualAddress(deployer.address);
+        });
     });
 
     describe('get_nft_address_by_index', () => {
-        it.todo('returns NFT address by index');
+        it('returns NFT address by index', async () => {
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            const nftAddress = await collection.getGetNftAddressByIndex(BigInt(0));
+            expect(nftAddress.loadAddress()).toEqualAddress(
+                blockchain.openContract(await Item.fromInit(collection.address, BigInt(0))).address,
+            );
+        });
     });
 
     describe('get_nft_content', () => {
-        it.todo('returns NFT content');
+        it('returns NFT content', async () => {
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            const individualContent = new Builder();
+            storeTitleArtist({
+                $$type: 'TitleArtist',
+                title: 'Title',
+                artist: 'Artist',
+            })(individualContent);
+
+            const nftContent = await collection.getGetNftContent(BigInt(9), individualContent.endCell());
+            expect(nftContent.firstByte).toBe(BigInt('0x00'));
+
+            const nameKey = BigInt('0x' + (await sha256('name')).toString('hex'));
+            expect(nftContent.dictionary.get(nameKey)).toEqualCell(
+                new Builder().storeStringTail('"Title" by Artist').endCell(),
+            );
+
+            const descriptionKey = BigInt('0x' + (await sha256('description')).toString('hex'));
+            expect(nftContent.dictionary.get(descriptionKey)).toEqualCell(
+                new Builder().storeStringTail('description').endCell(),
+            );
+
+            const imageKey = BigInt('0x' + (await sha256('image')).toString('hex'));
+            expect(nftContent.dictionary.get(imageKey)).toEqualCell(
+                new Builder().storeStringTail('https://example.com/9').endCell(),
+            );
+        });
+    });
+
+    describe('TransferOwnership', () => {
+        it('throws when called by non-owner', async () => {
+            const wrongSender = await blockchain.treasury('wrongSender');
+            const newOwner = await blockchain.treasury('newOwner');
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            const sendResult = await collection.send(
+                wrongSender.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'TransferOwnership',
+                    to: newOwner.address,
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: wrongSender.address,
+                to: collection.address,
+                success: false,
+                exitCode: 132,
+            });
+        });
+    });
+
+    describe('AcceptOwnership', () => {
+        it('changes owner', async () => {
+            const newOwner = await blockchain.treasury('newOwner');
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'TransferOwnership',
+                    to: newOwner.address,
+                },
+            );
+
+            const sendResult = await collection.send(
+                newOwner.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'AcceptOwnership',
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: newOwner.address,
+                to: collection.address,
+                success: true,
+            });
+
+            const ownerAddress = await collection.getOwner();
+            expect(ownerAddress).toEqualAddress(newOwner.address);
+        });
+
+        it('throws if there are no pending transfers', async () => {
+            const newOwner = await blockchain.treasury('newOwner');
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            const sendResult = await collection.send(
+                newOwner.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'AcceptOwnership',
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: newOwner.address,
+                to: collection.address,
+                success: false,
+                exitCode: 28480,
+            });
+        });
+
+        it('throws if pending transfer is for another user', async () => {
+            const newOwner = await blockchain.treasury('newOwner');
+            const fakeNewOwner = await blockchain.treasury('fakeNewOwner');
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'TransferOwnership',
+                    to: newOwner.address,
+                },
+            );
+
+            const sendResult = await collection.send(
+                fakeNewOwner.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'AcceptOwnership',
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: fakeNewOwner.address,
+                to: collection.address,
+                success: false,
+                exitCode: 28480,
+            });
+        });
+
+        it('setting "to" to null cancels the transfer', async () => {
+            const newOwner = await blockchain.treasury('newOwner');
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'TransferOwnership',
+                    to: newOwner.address,
+                },
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'TransferOwnership',
+                    to: null,
+                },
+            );
+
+            const sendResult = await collection.send(
+                newOwner.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'AcceptOwnership',
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: newOwner.address,
+                to: collection.address,
+                success: false,
+                exitCode: 28480,
+            });
+        });
     });
 });
-
-function makeDna({
-    fillWithOnes = false,
-    nonFullLevel0Cell = false,
-    missingLevel1Cell = false,
-    nonFullLevel1Cell = false,
-    missingLevel2Cell = false,
-    nonFullLevel2Cell = false,
-    missingLevel3Cell = false,
-    extraneousLevel3CellLeftmostBranch = false,
-    extraneousLevel3CellOtherBranch = false,
-    nonFullLevel3Cell = false,
-    incorrectSizeLevel3CellRightmost = false,
-    extraneousLevel4Cell = false,
-    extraneousLevel4CellRightmostLevel3Cell = false,
-}: {
-    fillWithOnes?: boolean;
-    nonFullLevel0Cell?: boolean;
-    missingLevel1Cell?: boolean;
-    nonFullLevel1Cell?: boolean;
-    missingLevel2Cell?: boolean;
-    nonFullLevel2Cell?: boolean;
-    missingLevel3Cell?: boolean;
-    extraneousLevel3CellLeftmostBranch?: boolean;
-    extraneousLevel3CellOtherBranch?: boolean;
-    nonFullLevel3Cell?: boolean;
-    incorrectSizeLevel3CellRightmost?: boolean;
-    extraneousLevel4Cell?: boolean;
-    extraneousLevel4CellRightmostLevel3Cell?: boolean;
-} = {}): Cell {
-    const fillWith = fillWithOnes ? BigInt('0b' + '1'.repeat(1023)) : 0;
-
-    const level3 = new Builder().storeUint(fillWith, nonFullLevel3Cell ? 1022 : 1023);
-
-    if (extraneousLevel4Cell) {
-        level3.storeRef(new Builder().storeBit(true));
-    }
-
-    const level3Rightmost = new Builder().storeUint(0, incorrectSizeLevel3CellRightmost ? 25 : 24);
-
-    if (extraneousLevel4CellRightmostLevel3Cell) {
-        level3Rightmost.storeRef(new Builder().storeBit(true));
-    }
-
-    const level2Leftmost = new Builder().storeUint(fillWith, 1023).storeRef(level3).storeRef(level3);
-
-    if (!missingLevel3Cell) {
-        level2Leftmost.storeRef(level3Rightmost);
-    }
-
-    if (extraneousLevel3CellLeftmostBranch) {
-        level2Leftmost.storeRef(level3);
-    }
-
-    const level2 = new Builder().storeUint(fillWith, nonFullLevel2Cell ? 1022 : 1023);
-
-    if (extraneousLevel3CellOtherBranch) {
-        level2.storeRef(level3);
-    }
-
-    const level1Leftmost = new Builder()
-        .storeUint(fillWith, 1023)
-        .storeRef(level2Leftmost)
-        .storeRef(level2)
-        .storeRef(level2)
-        .storeRef(level2);
-
-    const level1 = new Builder()
-        .storeUint(fillWith, nonFullLevel1Cell ? 1022 : 1023)
-        .storeRef(level2)
-        .storeRef(level2)
-        .storeRef(level2);
-
-    if (!missingLevel2Cell) {
-        level1.storeRef(level2);
-    }
-
-    const level0 = new Builder()
-        .storeUint(fillWith, nonFullLevel0Cell ? 1022 : 1023)
-        .storeRef(level1Leftmost)
-        .storeRef(level1)
-        .storeRef(level1);
-
-    if (!missingLevel1Cell) {
-        level0.storeRef(level1);
-    }
-
-    return level0.endCell();
-}
