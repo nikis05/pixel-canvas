@@ -4,7 +4,7 @@ on:
     branches: [main]
 jobs:
   contracts:
-    name: CI / contracts
+    name: contracts
     runs-on: self-hosted
     steps:
       - name: Setup Node
@@ -25,7 +25,7 @@ jobs:
       - name: Run tests
         run: cd contracts && npm blueprint test
   render-server:
-    name: CI / Render server
+    name: Render server
     runs-on: self-hosted
     steps:
       - name: Setup Rust
