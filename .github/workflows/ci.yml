@@ -1,9 +1,34 @@
+name: CI
 on:
   pull_request:
     branches: [main]
 jobs:
+  contracts:
+    name: Contracts
+    runs-on: self-hosted
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22.18.0"
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: contracts
+      - name: Get npm cache directory
+        id: npm-cache-dir
+        shell: bash
+        run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
+      - name: NPM install
+        run: cd contracts && npm i
+      - name: Run tests
+        run: cd contracts && npx blueprint build --all && npm test
   render-server:
-    name: CI / Render server
+    name: Render server
     runs-on: self-hosted
     steps:
       - name: Setup Rust

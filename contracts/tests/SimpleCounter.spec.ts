@@ -59,7 +59,7 @@ describe('SimpleCounter', () => {
                 {
                     $$type: 'Add',
                     amount: increaseBy,
-                }
+                },
             );
 
             expect(increaseResult.transactions).toHaveTransaction({
@@ -75,4 +75,6 @@ describe('SimpleCounter', () => {
             expect(counterAfter).toBe(counterBefore + increaseBy);
         }
     });
+
+    it.todo('test');
 });
