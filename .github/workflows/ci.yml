@@ -9,6 +9,8 @@ jobs:
     steps:
       - name: Setup Node
         uses: actions/setup-node@v5
+        with:
+          node-version: "22.18.0"
       - uses: actions/checkout@v5
         with:
           sparse-checkout: contracts
@@ -20,12 +22,11 @@ jobs:
         with:
           path: ${{ steps.npm-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          restore-keys: ${{ runner.os }}-node-
       - name: NPM install
         run: cd contracts && npm i
       - name: Run tests
-        run: cd contracts && npx blueprint test
+        run: cd contracts && npx blueprint build --all && npm test
   render-server:
     name: Render server
     runs-on: self-hosted

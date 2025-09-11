@@ -9,6 +9,8 @@ jobs:
     steps:
       - name: Setup Node
         uses: actions/setup-node@v5
+        with:
+          node-version: "22.18.0"
       - name: Get npm cache directory
         id: npm-cache-dir
         shell: bash
@@ -26,7 +28,7 @@ jobs:
         if: steps.lookup-cache.outputs.cache-hit != 'true'
         with:
           path: ${{ steps.npm-cache-dir.outputs.dir }}
-          key: $${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: ${{ runner.os }}-node-
       - name: NPM install
         run: cd contracts && npm i
