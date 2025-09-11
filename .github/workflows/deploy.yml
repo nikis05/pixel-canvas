@@ -1,9 +1,10 @@
+name: Deploy
 on:
   push:
     branches: [main]
 jobs:
   fender-server:
-    name: Deploy / Render server
+    name: Render server
     runs-on: self-hosted
     steps:
       - name: Set up Docker Buildx
