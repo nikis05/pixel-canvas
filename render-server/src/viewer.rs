@@ -26,7 +26,7 @@ impl Viewer {
         #[derive(Deserialize)]
         struct Payload {
             code: Option<u32>,
-            exit_code: Option<u32>,
+            exit_code: Option<i32>,
             stack: Option<Vec<StackElem>>,
         }
 
@@ -78,10 +78,9 @@ impl Viewer {
 
                                 let payload =
                                     serde_json::from_str::<Payload>(&response).map_err(|err| {
-                                        Either::Right(
-                                            anyhow::Error::new(err)
-                                                .context("failed to parse viewer response payload"),
-                                        )
+                                        Either::Right(anyhow::Error::new(err).context(format!(
+                                            "failed to parse viewer response payload: {response}"
+                                        )))
                                     })?;
 
                                 if let Some(429) = payload.code {

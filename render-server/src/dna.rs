@@ -19,8 +19,6 @@ impl Dna {
                 bits.extend_from_raw_slice(&level0_bits);
                 bits.pop();
 
-                dbg!(bits.len());
-
                 let mut is_leftmost_branch = true;
 
                 for _ in 0..4 {
@@ -39,22 +37,16 @@ impl Dna {
                         bits.extend_from_raw_slice(&level2_bits);
                         bits.pop();
 
-                        dbg!(bits.len());
-
                         if is_leftmost_branch {
                             for _ in 0..3 {
                                 let level3_bits =
                                     level2.next_reference()?.parser().load_bits(1023)?;
                                 bits.extend_from_raw_slice(&level3_bits);
                                 bits.pop();
-
-                                dbg!(bits.len());
                             }
 
                             let level3_bits3 = level2.next_reference()?.parser().load_bits(24)?;
                             bits.extend_from_raw_slice(&level3_bits3);
-
-                            dbg!(bits.len());
 
                             is_leftmost_branch = false;
                         }

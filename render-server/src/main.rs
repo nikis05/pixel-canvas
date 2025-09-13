@@ -78,7 +78,7 @@ async fn main() {
 
     let app = Router::new()
         .route(
-            "/img/:item_index",
+            "/img/{item_index}",
             routing::get({
                 async move |item_index: extract::Path<u32>| {
                     let item_index = item_index.0;
