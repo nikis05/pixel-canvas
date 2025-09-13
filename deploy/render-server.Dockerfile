@@ -3,18 +3,21 @@ RUN cargo install cargo-chef
 WORKDIR /app
 
 FROM chef AS planner
-COPY ./render-server/Cargo.toml .
-COPY ./render-server/Cargo.lock .
-COPY ./render-server/src ./src/
+COPY ./Cargo.toml .
+COPY ./Cargo.lock .
+COPY ./rust-colors ./rust-colors
+COPY ./render-server ./render-server
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
+COPY ./palette.json .
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
-COPY ./render-server/Cargo.toml .
-COPY ./render-server/Cargo.lock .
-COPY ./render-server/src ./src/
-RUN cargo build --release --bin render-server
+COPY ./Cargo.toml .
+COPY ./Cargo.lock .
+COPY ./rust-colors ./rust-colors
+COPY ./render-server ./render-server
+RUN cargo build --frozen --release --bin render-server
 
 FROM debian:bullseye-slim AS runtime
 RUN apt update
