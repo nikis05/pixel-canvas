@@ -74,10 +74,6 @@ impl Dna {
     pub fn pixels(&self) -> impl Iterator<Item = u8> {
         self.0.chunks(6).map(BitField::load::<u8>)
     }
-
-    pub fn bytes(&self) -> &[u8] {
-        self.0.as_raw_slice()
-    }
 }
 
 impl Display for Dna {

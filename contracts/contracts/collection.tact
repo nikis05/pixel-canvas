@@ -216,7 +216,7 @@ contract Collection with SafeTransferable, Resumable {
 
         let image: Cell = beginTailString()
             .concat(self.imageUrl)
-            .concat(contractAddress(initOf Item(myAddress(), index)).toString())
+            .concat(index.toString())
             .toCell();
 
         let nftContent: map<Int as uint256, Cell> = emptyMap();

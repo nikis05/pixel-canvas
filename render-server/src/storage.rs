@@ -1,9 +1,6 @@
-use crate::dna::Dna;
-use base64::Engine;
 use bytes::Bytes;
 use futures::{Stream, TryStreamExt};
 use s3::Bucket;
-use sha2::{Digest, Sha256};
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -39,9 +36,9 @@ impl Storage {
 
     pub async fn get(
         &self,
-        path: &Path,
+        path: &str,
     ) -> anyhow::Result<Option<impl Stream<Item = anyhow::Result<Bytes>> + 'static>> {
-        let result = self.0.get_object_stream(&path.0).await;
+        let result = self.0.get_object_stream(path).await;
 
         if let Err(s3::error::S3Error::HttpFailWithBody(404, _)) = result {
             return Ok(None);
@@ -50,18 +47,8 @@ impl Storage {
         Ok(Some(result?.bytes.map_err(anyhow::Error::new)))
     }
 
-    pub async fn put(&self, path: &Path, payload: Bytes) -> anyhow::Result<()> {
-        self.0.put_object(&path.0, &payload).await?;
+    pub async fn put(&self, path: &str, payload: Bytes) -> anyhow::Result<()> {
+        self.0.put_object(path, &payload).await?;
         Ok(())
-    }
-}
-
-pub struct Path(String);
-
-impl Path {
-    pub fn for_dna(dna: &Dna) -> Self {
-        let digest = Sha256::digest(dna.bytes());
-        let base64 = base64::engine::general_purpose::STANDARD.encode(digest);
-        Self(base64)
     }
 }

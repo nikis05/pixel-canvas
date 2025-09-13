@@ -2,7 +2,8 @@
 #![forbid(unused_must_use)]
 use crate::{
     dna::Dna,
-    storage::{Path, Storage},
+    item_address::item_address,
+    storage::Storage,
     viewer::{Viewer, ViewerError},
 };
 use axum::{
@@ -16,9 +17,9 @@ use axum::{
 use either::Either;
 use futures::TryStreamExt;
 use serde::Deserialize;
-use tonlib_core::TonAddress;
 
 mod dna;
+mod item_address;
 mod render;
 mod storage;
 mod viewer;
@@ -35,6 +36,7 @@ struct Env {
     s3_bucket_name: Option<String>,
     viewer_api_url: String,
     viewer_api_key: Option<String>,
+    collection_address: String,
 }
 
 fn capture_error(err: &anyhow::Error) {
@@ -78,9 +80,10 @@ async fn main() {
         .route(
             "/img/:item_index",
             routing::get({
-                async move |item_index: extract::Path<TonAddress>| {
+                async move |item_index: extract::Path<u32>| {
                     let item_index = item_index.0;
-                    let raw_dna = match viewer.get_dna(item_index).await {
+                    let item_address = item_address(&env.collection_address, item_index);
+                    let raw_dna = match viewer.get_dna(item_address).await {
                         Ok(raw_dna) => raw_dna,
                         Err(Either::Left(ViewerError::OverCapacity)) => {
                             return (StatusCode::TOO_MANY_REQUESTS, "Too Many Requests")
@@ -102,7 +105,7 @@ async fn main() {
                         }
                     };
 
-                    let path = Path::for_dna(&dna);
+                    let path = format!("image/{item_index}");
 
                     let existing_file = if let Some(storage) = &storage {
                         match storage.get(&path).await {
