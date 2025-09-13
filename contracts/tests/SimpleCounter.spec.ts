@@ -75,6 +75,4 @@ describe('SimpleCounter', () => {
             expect(counterAfter).toBe(counterBefore + increaseBy);
         }
     });
-
-    it.todo('test');
 });
