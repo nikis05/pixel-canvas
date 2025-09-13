@@ -1,4 +1,5 @@
 import { Builder, Cell, Transaction } from '@ton/core';
+import { sha256 } from '@ton/crypto';
 import { SmartContract } from '@ton/sandbox';
 import assert from 'node:assert';
 
@@ -28,6 +29,10 @@ export function getContractState(contract: SmartContract): Cell {
     const data = accountState.state.data;
     assert(data);
     return data;
+}
+
+export async function hashToInt(data: string): Promise<bigint> {
+    return BigInt('0x' + (await sha256(data)).toString('hex'));
 }
 
 export function makeDna({

@@ -1,27 +1,29 @@
 import "./claim.tact";
 import "./item.tact";
 import "./safe_transferable.tact";
+import "@stdlib/stoppable";
 
-contract Collection with SafeTransferable {
+contract Collection with SafeTransferable, Resumable {
     owner: Address;
+    stopped: Bool = true;
 
     maxTonkens: Int as uint32;
     imageUrl: String;
-    description: String;
     collectionContent: Cell;
 
     initialized: Bool = false;
 
     pendingOwnershipTransfer: Address? = null;
     minter: Address?;
+    resaleReporter: Address?;
     nextItemIndex: Int as uint32 = 0;
     numPendingClaims: Int as uint32 = 0;
+    numPendingReports: Int as uint32 = 0;
 
-    init(maxTokens: Int, imageUrl: String, description: String, collectionContent: Cell) {
+    init(maxTokens: Int, imageUrl: String, collectionContent: Cell) {
         self.owner = sender();
         self.maxTonkens = maxTokens;
         self.imageUrl = imageUrl;
-        self.description = description;
         self.collectionContent = collectionContent;
     }
 
@@ -37,18 +39,31 @@ contract Collection with SafeTransferable {
         });
     }
 
-    receive(msg: SetMinter) {
-        self.requireOwner();
-        self.minter = msg.minterAddress;
-    }
-
     receive(msg: SetDisplaySettings) {
         self.requireOwner();
         self.imageUrl = msg.imageUrl;
-        self.description = msg.description;
+        self.collectionContent = msg.collectionContent;
+        cashback(sender());
+    }
+
+    receive(msg: SetMinter) {
+        self.requireOwner();
+        self.requireStopped();
+        require(self.numPendingClaims == 0, "There are pending requests");
+        self.minter = msg.minterAddress;
+        cashback(sender());
+    }
+
+    receive(msg: SetResaleReporter) {
+        self.requireOwner();
+        self.requireStopped();
+        require(self.numPendingReports == 0, "There are pending requests");
+        self.resaleReporter = msg.resaleReporterAddress;
+        cashback(sender());
     }
 
     receive(msg: Mint) {
+        self.requireNotStopped();
         let sender: Address = sender();
         require(self.minter == sender, "Not a minter");
         require((self.nextItemIndex + self.numPendingClaims) < self.maxTonkens, "Tokens sold out");
@@ -87,7 +102,7 @@ contract Collection with SafeTransferable {
         let itemIndex: Int = self.nextItemIndex;
         deploy(DeployParameters {
             init: initOf Item(myAddress(), itemIndex),
-            value: ton("0.2"),
+            value: ton("0.1"),
             bounce: false,
             body: Transfer {
                 queryId: 0,
@@ -104,7 +119,7 @@ contract Collection with SafeTransferable {
         self.nextItemIndex += 1;
         message(MessageParameters {
             to: self.minter!!,
-            value: afterReserve() - ton("0.2"),
+            value: afterReserve() - ton("0.1"),
             bounce: false,
             body: SuccessfulMinting {
                 id: idFromDna(msg.subject),
@@ -125,6 +140,49 @@ contract Collection with SafeTransferable {
         });
     }
 
+    receive(msg: ReportResale) {
+        self.requireNotStopped();
+        let sender: Address = sender();
+        require(sender == self.resaleReporter, "Not a resale reporter");
+        self.numPendingReports += 1;
+        message(MessageParameters {
+            to: contractAddress(initOf Item(myAddress(), msg.itemIndex)),
+            value: 0,
+            mode: SendRemainingValue,
+            bounce: true,
+            body: ReportItemResale {
+                id: msg.id,
+                resaleValue: msg.resaleValue,
+            }.toCell(),
+        });
+    }
+
+    receive(msg: ReportResaleCallback) {
+        self.numPendingReports -= 1;
+        message(MessageParameters {
+            to: self.resaleReporter!!,
+            value: 0,
+            mode: SendRemainingValue,
+            bounce: false,
+            body: msg.toCell(),
+        });
+    }
+
+    bounced(msg: bounced<ReportItemResale>) {
+        self.numPendingReports -= 1;
+        message(MessageParameters {
+            to: self.resaleReporter!!,
+            value: 0,
+            mode: SendRemainingValue,
+            bounce: true,
+            body: ReportResaleCallback {
+                id: msg.id,
+            }.toCell(),
+        });
+    }
+
+    bounced(msg: Slice) {}
+
     get fun get_collection_data(): CollectionData {
         return CollectionData {
             nextItemIndex: self.nextItemIndex,
@@ -137,39 +195,51 @@ contract Collection with SafeTransferable {
         return contractAddress(initOf Item(myAddress(), item_index)).asSlice();
     }
 
-    get fun get_nft_content(index: Int, individual_content: Cell): NftContent {
-        let titleArtist = TitleArtist.fromCell(individual_content);
-        let fullName: StringBuilder = beginString();
-        fullName.append("\"");
-        fullName.append(titleArtist.title);
-        fullName.append("\"");
-        fullName.append(" by ");
-        fullName.append(titleArtist.artist);
+    get fun get_nft_content(index: Int, individual_content: Cell): Cell {
+        let individualContent = IndividualContent.fromCell(individual_content);
+        let fullName: Cell = beginTailString()
+            .concat("\"")
+            .concat(individualContent.title)
+            .concat("\"")
+            .concat(" by ")
+            .concat(individualContent.artist)
+            .toCell();
 
-        let image: StringBuilder = beginString();
-        image.append(self.imageUrl);
-        image.append(index.toString());
+        let description: Cell = beginTailString()
+            .concat("Artist fingerprint: ")
+            .concat(toHex(individualContent.artistFingerprint >> (256 - 32), 8))
+            .concat("\n")
+            .concat("Last sold for: ")
+            .concat(individualContent.lastResaleValue != null ? individualContent.lastResaleValue!!.toCoinsString() : "0")
+            .concat("ton")
+            .toCell();
 
-        let individualContent: map<Int, Cell> = emptyMap();
-        individualContent.set(sha256("name"), fullName.toCell());
-        individualContent.set(sha256("description"), self.description.asSlice().asCell());
-        individualContent.set(sha256("image"), image.toCell());
+        let image: Cell = beginTailString()
+            .concat(self.imageUrl)
+            .concat(index.toString())
+            .toCell();
 
-        return NftContent {
-            firstByte: 0x00,
-            dictionary: individualContent,
-        };
+        let nftContent: map<Int as uint256, Cell> = emptyMap();
+        nftContent.set(sha256("name"), fullName);
+        nftContent.set(sha256("description"), description);
+        nftContent.set(sha256("image"), image);
+
+        return beginCell()
+            .storeUint(0x00, 8)
+            .storeMaybeRef(nftContent.asCell())
+            .endCell();
     }
 }
 
-message SetMinter { minterAddress: Address }
+message SetMinter { minterAddress: Address? }
+
+message SetResaleReporter { resaleReporterAddress: Address? }
 
 message SetDisplaySettings {
     imageUrl: String;
-    description: String;
+    description: Cell;
+    collectionContent: Cell;
 }
-
-message RemoveMinter { minterAddress: Address }
 
 message Mint {
     id: Int as uint224;
@@ -184,6 +254,12 @@ message SuccessfulMinting {
 
 message FailedMinting {
     id: Int as uint224;
+}
+
+message ReportResale {
+    id: Int as uint224;
+    itemIndex: Int as uint32;
+    resaleValue: Int;
 }
 
 struct SuccessCallbackData {
@@ -201,11 +277,6 @@ struct CollectionData {
     nextItemIndex: Int;
     collectionContent: Cell;
     ownerAddress: Slice;
-}
-
-struct NftContent {
-    firstByte: Int as uint8;
-    dictionary: map<Int, Cell>;
 }
 
 inline fun afterReserve(): Int {
@@ -278,4 +349,36 @@ inline fun hasNoRefs(slice: Slice): Bool {
 
 inline fun idFromDna(dna: Int): Int {
     return dna & (pow2(224) - 1);
+}
+
+inline fun toHex(x: Int, length: Int): String {
+    let result: StringBuilder = beginString();
+
+    let i: Int = length - 1;
+    repeat (length) {
+        let nibble: Int = (x >> (i * 4)) & 0xf;
+        let ch = hexForBits(nibble);
+        result.append(ch);
+        i -= 1;
+    }
+
+    return result.toString();
+}
+
+inline fun hexForBits(bits: Int): String {
+    if (bits < 10) {
+        return bits.toString();
+    } else if (bits == 10) {
+        return "a";
+    } else if (bits == 11) {
+        return "b";
+    } else if (bits == 12) {
+        return "c";
+    } else if (bits == 13) {
+        return "d";
+    } else if (bits == 14) {
+        return "e";
+    } else {
+        return "f";
+    }
 }

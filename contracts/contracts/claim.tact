@@ -1,4 +1,5 @@
 import "./issuable.tact";
+import "./destroy";
 
 contract Claim with Issuable {
     issuer: Address;
@@ -10,6 +11,12 @@ contract Claim with Issuable {
         self.subject = subject;
     }
 
+    receive() {
+        if (!self.used) {
+            destroy(sender());
+        }
+    }
+
     receive(msg: ClaimMessage) {
         require(!self.used, "This claim is already used");
         if (self.destroyIfWrongIssuer()) {
@@ -18,8 +25,7 @@ contract Claim with Issuable {
         self.used = true;
         message(MessageParameters {
             to: msg.successCallbackAddress,
-            value: 0,
-            mode: SendRemainingBalance,
+            value: context().value - ton("0.01"),
             bounce: false,
             body: ClaimSuccess {
                 subject: self.subject,

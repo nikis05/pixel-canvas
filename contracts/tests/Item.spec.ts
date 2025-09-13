@@ -7,9 +7,10 @@ import {
     storeItemSpec,
     storeOwnershipAssigned,
     storeReportStaticData,
-    storeTitleArtist,
+    storeIndividualContent,
+    loadIndividualContent,
 } from '../build/Collection/Collection_Collection';
-import { getTransactionFees, getTransactionValue } from './utils';
+import { getTransactionFees, getTransactionValue, hashToInt } from './utils';
 
 describe('Item', () => {
     let blockchain: Blockchain;
@@ -90,6 +91,63 @@ describe('Item', () => {
                     customPayload,
                     forwardAmount: toNano(0),
                     forwardPayload: Cell.EMPTY.asSlice(),
+                },
+            );
+
+            expect(deployResult.transactions).toHaveTransaction({
+                from: wrongSender.address,
+                to: item.address,
+                deploy: false,
+                success: true,
+            });
+
+            expect(deployResult.transactions).toHaveTransaction({
+                from: item.address,
+                to: wrongSender.address,
+                body: Cell.EMPTY,
+                mode: SendMode.CARRY_ALL_REMAINING_BALANCE + SendMode.DESTROY_ACCOUNT_IF_ZERO,
+                inMessageBounceable: false,
+                value: toNano('0.2') - getTransactionFees(deployResult.transactions[1]).total,
+            });
+
+            const blockchainItem = await blockchain.getContract(item.address);
+            expect(blockchainItem.accountState).toBe(undefined);
+
+            const deployResult2 = await item.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.2'),
+                },
+                {
+                    $$type: 'Transfer',
+                    queryId: BigInt(123),
+                    newOwner: owner.address,
+                    responseDestination: null,
+                    customPayload,
+                    forwardAmount: toNano(0),
+                    forwardPayload: Cell.EMPTY.asSlice(),
+                },
+            );
+
+            expect(deployResult2.transactions).toHaveTransaction({
+                from: deployer.address,
+                to: item.address,
+                deploy: true,
+                success: true,
+            });
+        });
+
+        it('self-destructs if created by wrong sender (ReportResale)', async () => {
+            const wrongSender = await blockchain.treasury('wrongSender');
+            const deployResult = await item.send(
+                wrongSender.getSender(),
+                {
+                    value: toNano('0.2'),
+                },
+                {
+                    $$type: 'ReportItemResale',
+                    id: BigInt(123),
+                    resaleValue: toNano('1'),
                 },
             );
 
@@ -273,12 +331,20 @@ describe('Item', () => {
             });
 
             const nftData = await item.getGetNftData();
-            const titleArtist = new Builder();
-            storeTitleArtist({ $$type: 'TitleArtist', title: 'title', artist: 'artist' })(titleArtist);
+
+            const artistFingerprint = await hashToInt(artist.address.toString() + 'artist');
+            const individualContent = new Builder();
+            storeIndividualContent({
+                $$type: 'IndividualContent',
+                title: 'title',
+                artist: 'artist',
+                lastResaleValue: null,
+                artistFingerprint,
+            })(individualContent);
 
             expect(nftData.isInitialized).toBe(BigInt(1));
             expect(nftData.ownerAddress).toEqualSlice(new Builder().storeAddress(owner.address).asSlice());
-            expect(nftData.individualContent).toEqualCell(titleArtist.endCell());
+            expect(nftData.individualContent).toEqualCell(individualContent.endCell());
         });
 
         it('changes the owner', async () => {
@@ -611,6 +677,88 @@ describe('Item', () => {
         });
     });
 
+    describe('ReportItemResale', () => {
+        it('updates resale value and sends back callback message', async () => {
+            await item.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.2'),
+                },
+                {
+                    $$type: 'Transfer',
+                    queryId: BigInt(123),
+                    newOwner: owner.address,
+                    responseDestination: null,
+                    customPayload,
+                    forwardAmount: toNano(0),
+                    forwardPayload: Cell.EMPTY.asSlice(),
+                },
+            );
+
+            const sendResult = await item.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.1'),
+                },
+                {
+                    $$type: 'ReportItemResale',
+                    id: BigInt(999),
+                    resaleValue: toNano('3'),
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: deployer.address,
+                to: item.address,
+                op: 1601613934,
+                success: true,
+            });
+
+            const nftData = await item.getGetNftData();
+            const individualContent = loadIndividualContent(nftData.individualContent.asSlice());
+
+            expect(individualContent.lastResaleValue).toBe(toNano(3));
+        });
+
+        it('throws if sender is not the collection', async () => {
+            const wrongSender = await blockchain.treasury('wrongSender');
+            await item.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.2'),
+                },
+                {
+                    $$type: 'Transfer',
+                    queryId: BigInt(123),
+                    newOwner: owner.address,
+                    responseDestination: null,
+                    customPayload,
+                    forwardAmount: toNano(0),
+                    forwardPayload: Cell.EMPTY.asSlice(),
+                },
+            );
+
+            const sendResult = await item.send(
+                wrongSender.getSender(),
+                {
+                    value: toNano('0.1'),
+                },
+                {
+                    $$type: 'ReportItemResale',
+                    id: BigInt(999),
+                    resaleValue: toNano('3'),
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: wrongSender.address,
+                to: item.address,
+                success: false,
+                exitCode: 61739,
+            });
+        });
+    });
+
     describe('GetStaticData', () => {
         it('sends a ReportStaticData message to the sender', async () => {
             const getter = await blockchain.treasury('getter');
@@ -686,37 +834,21 @@ describe('Item', () => {
             );
 
             const data = await item.getGetNftData();
-            const titleArtist = new Builder();
-            storeTitleArtist({ $$type: 'TitleArtist', title: 'title', artist: 'artist' })(titleArtist);
+            const individualContent = new Builder();
+            const artistFingerprint = await hashToInt(artist.address.toString() + 'artist');
+            storeIndividualContent({
+                $$type: 'IndividualContent',
+                title: 'title',
+                artist: 'artist',
+                lastResaleValue: null,
+                artistFingerprint,
+            })(individualContent);
 
             expect(data.isInitialized).toBe(BigInt(1));
             expect(data.index).toBe(BigInt(111));
             expect(data.collectionAddress).toEqualSlice(new Builder().storeAddress(deployer.address).asSlice());
             expect(data.ownerAddress).toEqualSlice(new Builder().storeAddress(owner.address).asSlice());
-            expect(data.individualContent).toEqualCell(titleArtist.endCell());
-        });
-    });
-
-    describe('get_artist_address', () => {
-        it('should return artist address', async () => {
-            await item.send(
-                deployer.getSender(),
-                {
-                    value: toNano('0.2'),
-                },
-                {
-                    $$type: 'Transfer',
-                    queryId: BigInt(123),
-                    newOwner: owner.address,
-                    responseDestination: null,
-                    customPayload,
-                    forwardAmount: toNano(0),
-                    forwardPayload: Cell.EMPTY.asSlice(),
-                },
-            );
-
-            const artistAddress = await item.getArtistAddress();
-            expect(artistAddress).toEqualAddress(artist.address);
+            expect(data.individualContent).toEqualCell(individualContent.endCell());
         });
     });
 

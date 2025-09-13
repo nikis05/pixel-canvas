@@ -32,10 +32,8 @@ describe('Store', () => {
 
         buyer = await blockchain.treasury('buyer');
 
-        collection = blockchain.openContract(
-            await Collection.fromInit(BigInt(2), 'https://example.com', 'description', Cell.EMPTY),
-        );
-        store = blockchain.openContract(await Store.fromInit(collection.address));
+        collection = blockchain.openContract(await Collection.fromInit(BigInt(2), 'https://example.com', Cell.EMPTY));
+        store = blockchain.openContract(await Store.fromInit(collection.address, toNano('4.99')));
 
         await collection.send(
             deployer.getSender(),
@@ -54,6 +52,14 @@ describe('Store', () => {
                 $$type: 'SetMinter',
                 minterAddress: store.address,
             },
+        );
+
+        await collection.send(
+            deployer.getSender(),
+            {
+                value: toNano('0.5'),
+            },
+            'Resume',
         );
     });
 
@@ -504,7 +510,7 @@ describe('Store', () => {
             });
         });
 
-        it('throws if the shop is closed', async () => {
+        it('throws if the shop is stopped', async () => {
             await store.send(
                 deployer.getSender(),
                 {
@@ -518,10 +524,7 @@ describe('Store', () => {
                 {
                     value: toNano('0.5'),
                 },
-                {
-                    $$type: 'SetClosed',
-                    closed: true,
-                },
+                'Stop',
             );
 
             const sendResult = await store.send(
@@ -541,7 +544,7 @@ describe('Store', () => {
                 from: buyer.address,
                 to: store.address,
                 success: false,
-                exitCode: 55491,
+                exitCode: 133,
             });
         });
 
@@ -1111,8 +1114,8 @@ describe('Store', () => {
         });
     });
 
-    describe('SetClosed', () => {
-        it('closes the contract', async () => {
+    describe('SetItemPrice', () => {
+        it('sets item price', async () => {
             await store.send(
                 deployer.getSender(),
                 {
@@ -1121,90 +1124,56 @@ describe('Store', () => {
                 null,
             );
 
-            await store.send(
+            const sendResult = await store.send(
                 deployer.getSender(),
                 {
                     value: toNano('0.5'),
                 },
                 {
-                    $$type: 'SetClosed',
-                    closed: true,
-                },
-            );
-
-            const sendResult = await store.send(
-                buyer.getSender(),
-                {
-                    value: toNano('0.5'),
-                },
-                {
-                    $$type: 'Bake',
-                    spec: itemSpec,
-                    giftTo: null,
-                    offerExclusive: null,
+                    $$type: 'SetItemPrice',
+                    newPrice: toNano('4'),
                 },
             );
 
             expect(sendResult.transactions).toHaveTransaction({
-                from: buyer.address,
-                to: store.address,
-                success: false,
-                exitCode: 55491,
-            });
-        });
-
-        it('opens the contract', async () => {
-            await store.send(
-                deployer.getSender(),
-                {
-                    value: toNano('0.5'),
-                },
-                null,
-            );
-
-            await store.send(
-                deployer.getSender(),
-                {
-                    value: toNano('0.5'),
-                },
-                {
-                    $$type: 'SetClosed',
-                    closed: true,
-                },
-            );
-
-            await store.send(
-                deployer.getSender(),
-                {
-                    value: toNano('0.5'),
-                },
-                {
-                    $$type: 'SetClosed',
-                    closed: false,
-                },
-            );
-
-            const sendResult = await store.send(
-                buyer.getSender(),
-                {
-                    value: toNano('4.99'),
-                },
-                {
-                    $$type: 'Bake',
-                    spec: itemSpec,
-                    giftTo: null,
-                    offerExclusive: null,
-                },
-            );
-
-            expect(sendResult.transactions).toHaveTransaction({
-                from: buyer.address,
+                from: deployer.address,
                 to: store.address,
                 success: true,
             });
+
+            const itemPrice = await store.getItemPrice();
+            expect(itemPrice).toBe(toNano('4'));
         });
 
-        it('throws if sender is not the owner', async () => {
+        it('throws if item price is too low', async () => {
+            await store.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            const sendResult = await store.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'SetItemPrice',
+                    newPrice: toNano('0.4'),
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: deployer.address,
+                to: store.address,
+                success: false,
+                exitCode: 47395,
+            });
+        });
+
+        it('throws if owner is not sender', async () => {
             const wrongSender = await blockchain.treasury('wrongSender');
 
             await store.send(
@@ -1221,8 +1190,8 @@ describe('Store', () => {
                     value: toNano('0.5'),
                 },
                 {
-                    $$type: 'SetClosed',
-                    closed: true,
+                    $$type: 'SetItemPrice',
+                    newPrice: toNano('4'),
                 },
             );
 
@@ -1250,10 +1219,7 @@ describe('Store', () => {
                 {
                     value: toNano('0.5'),
                 },
-                {
-                    $$type: 'SetClosed',
-                    closed: true,
-                },
+                'Stop',
             );
 
             const sendResult = await store.send(
@@ -1305,6 +1271,33 @@ describe('Store', () => {
                 to: store.address,
                 success: false,
                 exitCode: 132,
+            });
+        });
+
+        it('throws if not closed', async () => {
+            await store.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            const sendResult = await store.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'Terminate',
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: deployer.address,
+                to: store.address,
+                success: false,
+                exitCode: 53296,
             });
         });
     });

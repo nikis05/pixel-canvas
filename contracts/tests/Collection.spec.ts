@@ -1,10 +1,16 @@
 import { Blockchain, calcComputePhase, printTransactionFees, SandboxContract, TreasuryContract } from '@ton/sandbox';
-import { BitString, Builder, Cell, Slice, toNano, Transaction } from '@ton/core';
-import { Collection, loadCollection$Data } from '../build/Collection/Collection_Collection';
+import { BitString, Builder, Cell, Dictionary, Slice, toNano, Transaction } from '@ton/core';
+import {
+    Collection,
+    loadCollection$Data,
+    loadIndividualContent,
+    storeIndividualContent,
+    storeReportResaleCallback,
+} from '../build/Collection/Collection_Collection';
 import '@ton/test-utils';
-import { getContractState, getTransactionFees, makeDna } from './utils';
+import { getContractState, getTransactionFees, hashToInt, makeDna } from './utils';
 import { describe } from 'node:test';
-import { Item, storeItemCreateData, storeItemSpec, storeTitleArtist, storeTransfer } from '../build/Item/Item_Item';
+import { Item, storeItemCreateData, storeItemSpec, storeTransfer } from '../build/Item/Item_Item';
 import { sha256 } from '@ton/crypto';
 import assert from 'node:assert';
 import { loadFailedMinting, loadSuccessfulMinting, storeSuccessfulMinting } from '../build/Store/Store_Store';
@@ -16,6 +22,7 @@ describe('Collection', () => {
     let blockchain: Blockchain;
     let deployer: SandboxContract<TreasuryContract>;
     let minter: SandboxContract<TreasuryContract>;
+    let reporter: SandboxContract<TreasuryContract>;
     let artist: SandboxContract<TreasuryContract>;
     let recipient: SandboxContract<TreasuryContract>;
     let collection: SandboxContract<Collection>;
@@ -28,12 +35,14 @@ describe('Collection', () => {
 
         minter = await blockchain.treasury('minter');
 
+        reporter = await blockchain.treasury('reporter');
+
         artist = await blockchain.treasury('artist');
 
         recipient = await blockchain.treasury('recipient');
 
         collection = blockchain.openContract(
-            await Collection.fromInit(BigInt(2), 'https://example.com/', 'description', collectionContent),
+            await Collection.fromInit(BigInt(2), 'https://example.com/', collectionContent),
         );
     });
 
@@ -121,8 +130,17 @@ describe('Collection', () => {
             expect(sendResult.transactions).toHaveTransaction({
                 from: deployer.address,
                 to: collection.address,
+                op: 1866603462,
                 success: true,
             });
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                'Resume',
+            );
 
             const mintResult = await collection.send(
                 minter.getSender(),
@@ -155,6 +173,39 @@ describe('Collection', () => {
             });
         });
 
+        it('throws if not stopped', async () => {
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                'Resume',
+            );
+
+            const sendResult = await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                { $$type: 'SetMinter', minterAddress: minter.address },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: deployer.address,
+                to: collection.address,
+                success: false,
+                exitCode: 53296,
+            });
+        });
+
         it('throws if sender is not the owner', async () => {
             const wrongSender = await blockchain.treasury('wrongSender');
             await collection.send(
@@ -182,8 +233,8 @@ describe('Collection', () => {
         });
     });
 
-    describe('SetDisplaySettings', () => {
-        it('sets image url', async () => {
+    describe('SetResaleReporter', () => {
+        it('sets current resale reporter', async () => {
             await collection.send(
                 deployer.getSender(),
                 {
@@ -197,10 +248,126 @@ describe('Collection', () => {
                 {
                     value: toNano('0.5'),
                 },
+                { $$type: 'SetResaleReporter', resaleReporterAddress: reporter.address },
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                'Resume',
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: deployer.address,
+                to: collection.address,
+                op: 624852631,
+                success: true,
+            });
+
+            const reportResult = await collection.send(
+                reporter.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'ReportResale',
+                    id: BigInt(123),
+                    itemIndex: BigInt(0),
+                    resaleValue: toNano('3'),
+                },
+            );
+
+            expect(reportResult.transactions).toHaveTransaction({
+                from: reporter.address,
+                to: collection.address,
+                success: true,
+            });
+        });
+
+        it('throws if not stopped', async () => {
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                'Resume',
+            );
+
+            const sendResult = await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                { $$type: 'SetResaleReporter', resaleReporterAddress: reporter.address },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: deployer.address,
+                to: collection.address,
+                success: false,
+                exitCode: 53296,
+            });
+        });
+
+        it('throws if sender is not the owner', async () => {
+            const wrongSender = await blockchain.treasury('wrongSender');
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            const sendResult = await collection.send(
+                wrongSender.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                { $$type: 'SetResaleReporter', resaleReporterAddress: reporter.address },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: wrongSender.address,
+                to: collection.address,
+                success: false,
+                exitCode: 132,
+            });
+        });
+    });
+
+    describe('SetDisplaySettings', () => {
+        it('sets image url', async () => {
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            const newCollectionContent = new Builder().storeInt(2, 4).endCell();
+
+            const sendResult = await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
                 {
                     $$type: 'SetDisplaySettings',
                     imageUrl: 'https://new.example.com',
-                    description: 'bar',
+                    description: new Builder().storeInt(0x00, 8).storeStringTail('bar').endCell(),
+                    collectionContent: newCollectionContent,
                 },
             );
 
@@ -210,22 +377,28 @@ describe('Collection', () => {
                 success: true,
             });
 
-            const titleArtist = new Builder();
-            storeTitleArtist({
-                $$type: 'TitleArtist',
+            const individualContent = new Builder();
+            storeIndividualContent({
+                $$type: 'IndividualContent',
                 title: 'title',
                 artist: 'artist',
-            })(titleArtist);
+                lastResaleValue: toNano(1),
+                artistFingerprint: await hashToInt(minter.address + 'test'),
+            })(individualContent);
 
-            const nftContent = await collection.getGetNftContent(BigInt(0), titleArtist.endCell());
+            const nftContent = (await collection.getGetNftContent(BigInt(0), individualContent.endCell())).beginParse();
 
-            const descriptionKey = BigInt('0x' + (await sha256('description')).toString('hex'));
-            const description = nftContent.dictionary.get(descriptionKey)?.beginParse().loadStringTail();
-            expect(description).toBe('bar');
+            nftContent.loadUint(8);
+            const dictionary = nftContent.loadDict(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell());
 
-            const imageKey = BigInt('0x' + (await sha256('image')).toString('hex'));
-            const image = nftContent.dictionary.get(imageKey)?.beginParse().loadStringTail();
+            const image = dictionary
+                .get(await hashToInt('image'))
+                ?.beginParse()
+                .loadStringTail();
             expect(image?.startsWith('https://new.example.com/'));
+
+            const collectionContent = await collection.getGetCollectionData();
+            expect(collectionContent.collectionContent).toEqualCell(newCollectionContent);
         });
 
         it('throws if sender is not the owner', async () => {
@@ -246,7 +419,8 @@ describe('Collection', () => {
                 {
                     $$type: 'SetDisplaySettings',
                     imageUrl: 'https://new.example.com/',
-                    description: 'bar',
+                    description: new Builder().storeInt(0x00, 8).storeStringTail('description').endCell(),
+                    collectionContent: new Builder().storeInt(2, 4).endCell(),
                 },
             );
 
@@ -260,6 +434,47 @@ describe('Collection', () => {
     });
 
     describe('Mint', () => {
+        it('throws if stopped', async () => {
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            const sendResult = await collection.send(
+                minter.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'Mint',
+                    id: BigInt(123),
+                    recipient: recipient.address,
+                    itemCreateData: {
+                        $$type: 'ItemCreateData',
+
+                        spec: {
+                            $$type: 'ItemSpec',
+                            title: 'title',
+                            artist: 'artist',
+                            dna: makeDna(),
+                        },
+                        artistAddress: artist.address,
+                    },
+                    forwardPayloadCustom: Cell.EMPTY,
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: minter.address,
+                to: collection.address,
+                success: false,
+                exitCode: 133,
+            });
+        });
+
         it('throws if sender is not the minter', async () => {
             const wrongSender = await blockchain.treasury('wrongSender');
             await collection.send(
@@ -268,6 +483,14 @@ describe('Collection', () => {
                     value: toNano('0.5'),
                 },
                 null,
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                'Resume',
             );
 
             const sendResult = await collection.send(
@@ -317,6 +540,14 @@ describe('Collection', () => {
                     value: toNano('0.5'),
                 },
                 { $$type: 'SetMinter', minterAddress: minter.address },
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                'Resume',
             );
 
             await collection.send(
@@ -416,6 +647,14 @@ describe('Collection', () => {
                 { $$type: 'SetMinter', minterAddress: minter.address },
             );
 
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                'Resume',
+            );
+
             const sendResult = await collection.send(
                 minter.getSender(),
                 {
@@ -463,6 +702,14 @@ describe('Collection', () => {
                     value: toNano('0.5'),
                 },
                 { $$type: 'SetMinter', minterAddress: minter.address },
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                'Resume',
             );
 
             const sendResult = await collection.send(
@@ -516,6 +763,14 @@ describe('Collection', () => {
                             value: toNano('0.5'),
                         },
                         { $$type: 'SetMinter', minterAddress: minter.address },
+                    );
+
+                    await collection.send(
+                        deployer.getSender(),
+                        {
+                            value: toNano('0.5'),
+                        },
+                        'Resume',
                     );
 
                     const sendResult = await collection.send(
@@ -594,6 +849,14 @@ describe('Collection', () => {
                     value: toNano('0.5'),
                 },
                 { $$type: 'SetMinter', minterAddress: minter.address },
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                'Resume',
             );
 
             const dna = makeDna();
@@ -682,6 +945,14 @@ describe('Collection', () => {
                     value: toNano('0.5'),
                 },
                 { $$type: 'SetMinter', minterAddress: minter.address },
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                'Resume',
             );
 
             const dna = makeDna();
@@ -776,6 +1047,14 @@ describe('Collection', () => {
             );
 
             await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                'Resume',
+            );
+
+            await collection.send(
                 minter.getSender(),
                 {
                     value: toNano('0.5'),
@@ -847,6 +1126,14 @@ describe('Collection', () => {
                     value: toNano('0.5'),
                 },
                 { $$type: 'SetMinter', minterAddress: minter.address },
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                'Resume',
             );
 
             const itemCreateData1 = {
@@ -1001,6 +1288,255 @@ describe('Collection', () => {
         });
     });
 
+    describe('ReportResale', () => {
+        it('updates the token and sends back a callback message', async () => {
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                { $$type: 'SetMinter', minterAddress: minter.address },
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                { $$type: 'SetResaleReporter', resaleReporterAddress: reporter.address },
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                'Resume',
+            );
+
+            await collection.send(
+                minter.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'Mint',
+                    id: BigInt(123),
+                    recipient: recipient.address,
+                    itemCreateData: {
+                        $$type: 'ItemCreateData',
+
+                        spec: {
+                            $$type: 'ItemSpec',
+                            title: 'title',
+                            artist: 'artist',
+                            dna: makeDna(),
+                        },
+                        artistAddress: artist.address,
+                    },
+                    forwardPayloadCustom: Cell.EMPTY,
+                },
+            );
+
+            const sendResult = await collection.send(
+                reporter.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'ReportResale',
+                    id: BigInt(999),
+                    itemIndex: BigInt(0),
+                    resaleValue: toNano('3'),
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: reporter.address,
+                to: collection.address,
+                success: true,
+            });
+
+            const nftData = await blockchain
+                .openContract(await Item.fromInit(collection.address, BigInt(0)))
+                .getGetNftData();
+
+            const individualContent = loadIndividualContent(nftData.individualContent.asSlice());
+            expect(individualContent.lastResaleValue).toBe(toNano('3'));
+
+            const reportResaleCallback = new Builder();
+            storeReportResaleCallback({
+                $$type: 'ReportResaleCallback',
+                id: BigInt(999),
+            })(reportResaleCallback);
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: collection.address,
+                to: reporter.address,
+                mode: 64,
+                body: reportResaleCallback.endCell(),
+            });
+        });
+
+        it('on bounce, sets back a callback message', async () => {
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                { $$type: 'SetMinter', minterAddress: minter.address },
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                { $$type: 'SetResaleReporter', resaleReporterAddress: reporter.address },
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                'Resume',
+            );
+
+            const sendResult = await collection.send(
+                reporter.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'ReportResale',
+                    id: BigInt(999),
+                    itemIndex: BigInt(0),
+                    resaleValue: toNano('3'),
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: reporter.address,
+                to: collection.address,
+                success: true,
+            });
+
+            const nftAddress = blockchain.openContract(await Item.fromInit(collection.address, BigInt(0))).address;
+            expect(sendResult.transactions).toHaveTransaction({
+                from: nftAddress,
+                to: collection.address,
+                inMessageBounced: true,
+            });
+
+            const reportResaleCallback = new Builder();
+            storeReportResaleCallback({
+                $$type: 'ReportResaleCallback',
+                id: BigInt(999),
+            })(reportResaleCallback);
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: collection.address,
+                to: reporter.address,
+                mode: 64,
+                body: reportResaleCallback.endCell(),
+            });
+        });
+
+        it('throws if sender is not the reporter', async () => {
+            const wrongSender = await blockchain.treasury('wrongSender');
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                'Resume',
+            );
+
+            const sendResult = await collection.send(
+                wrongSender.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'ReportResale',
+                    id: BigInt(999),
+                    itemIndex: BigInt(0),
+                    resaleValue: toNano('3'),
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: wrongSender.address,
+                to: collection.address,
+                success: false,
+                exitCode: 4583,
+            });
+        });
+
+        it('throws if stopped', async () => {
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                null,
+            );
+
+            await collection.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                { $$type: 'SetResaleReporter', resaleReporterAddress: reporter.address },
+            );
+
+            const sendResult = await collection.send(
+                reporter.getSender(),
+                {
+                    value: toNano('0.5'),
+                },
+                {
+                    $$type: 'ReportResale',
+                    id: BigInt(999),
+                    itemIndex: BigInt(0),
+                    resaleValue: toNano('3'),
+                },
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: reporter.address,
+                to: collection.address,
+                success: false,
+                exitCode: 133,
+            });
+        });
+    });
+
     describe('get_collection_data', () => {
         it('returns collection data', async () => {
             await collection.send(
@@ -1045,29 +1581,31 @@ describe('Collection', () => {
                 null,
             );
 
+            const artistFingerprint = (await sha256(minter.address + 'Artist')).toString('hex');
             const individualContent = new Builder();
-            storeTitleArtist({
-                $$type: 'TitleArtist',
+            storeIndividualContent({
+                $$type: 'IndividualContent',
                 title: 'Title',
                 artist: 'Artist',
+                lastResaleValue: toNano('0.1'),
+                artistFingerprint: BigInt('0x' + artistFingerprint),
             })(individualContent);
 
-            const nftContent = await collection.getGetNftContent(BigInt(9), individualContent.endCell());
-            expect(nftContent.firstByte).toBe(BigInt('0x00'));
+            const nftContent = (await collection.getGetNftContent(BigInt(9), individualContent.endCell())).beginParse();
+            expect(nftContent.loadUint(8)).toBe(0x00);
 
-            const nameKey = BigInt('0x' + (await sha256('name')).toString('hex'));
-            expect(nftContent.dictionary.get(nameKey)).toEqualCell(
-                new Builder().storeStringTail('"Title" by Artist').endCell(),
+            const dictionary = nftContent.loadDict(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell());
+            expect(dictionary.get(await hashToInt('name'))).toEqualCell(
+                new Builder().storeInt(0x00, 8).storeStringTail('"Title" by Artist').endCell(),
             );
 
-            const descriptionKey = BigInt('0x' + (await sha256('description')).toString('hex'));
-            expect(nftContent.dictionary.get(descriptionKey)).toEqualCell(
-                new Builder().storeStringTail('description').endCell(),
+            const expectedDescription = `Artist fingerprint: ${artistFingerprint.slice(0, 8)}\nLast sold for: 0.1ton`;
+            expect(dictionary.get(await hashToInt('description'))).toEqualCell(
+                new Builder().storeInt(0x00, 8).storeStringTail(expectedDescription).endCell(),
             );
 
-            const imageKey = BigInt('0x' + (await sha256('image')).toString('hex'));
-            expect(nftContent.dictionary.get(imageKey)).toEqualCell(
-                new Builder().storeStringTail('https://example.com/9').endCell(),
+            expect(dictionary.get(await hashToInt('image'))).toEqualCell(
+                new Builder().storeInt(0x00, 8).storeStringTail('https://example.com/9').endCell(),
             );
         });
     });

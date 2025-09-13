@@ -9,6 +9,7 @@ contract Item with Issuable {
 
     spec: ItemSpec?;
     artistAddress: Address?;
+    lastResaleValue: Int?;
 
     init(collectionAddress: Address, itemIndex: Int) {
         self.collectionAddress = collectionAddress;
@@ -73,6 +74,28 @@ contract Item with Issuable {
         self.owner = msg.newOwner;
     }
 
+    receive(msg: ReportItemResale) {
+        if (!self.initialized) {
+            if (self.destroyIfWrongIssuer()) {
+                return;
+            }
+        } else {
+            require(sender() == self.collectionAddress, "Wrong sender");
+        }
+
+        self.lastResaleValue = msg.resaleValue;
+
+        message(MessageParameters {
+            to: self.collectionAddress,
+            value: 0,
+            mode: SendRemainingValue,
+            bounce: true,
+            body: ReportResaleCallback {
+                id: msg.id,
+            }.toCell(),
+        });
+    }
+
     receive(msg: GetStaticData) {
         let sender: Address = sender();
         if (!self.initialized) {
@@ -101,20 +124,27 @@ contract Item with Issuable {
             collectionAddress: self.collectionAddress.asSlice(),
             ownerAddress: self.owner.asSlice(),
             individualContent: self.spec != null
-                ? TitleArtist {
+                ? IndividualContent {
                     title: self.spec!!.title,
                     artist: self.spec!!.artist,
+                    lastResaleValue: self.lastResaleValue,
+                    artistFingerprint: self.artistFingerprint(),
                 }.toCell()
                 : emptyCell(),
         };
     }
 
-    get fun artist_address(): Address? {
-        return self.artistAddress;
-    }
-
     get fun dna(): Cell? {
         return self.spec != null ? self.spec!!.dna : null;
+    }
+
+    inline fun artistFingerprint(): Int {
+        return sha256(
+            beginString()
+                .concat(self.artistAddress!!.toString())
+                .concat(self.spec!!.artist)
+                .toSlice(),
+        );
     }
 
     override inline fun issuer(): Address {
@@ -129,6 +159,15 @@ message(0x5fcc3d14) Transfer {
     customPayload: Cell?;
     forwardAmount: Int as coins;
     forwardPayload: Slice as remaining;
+}
+
+message ReportItemResale {
+    id: Int as uint224;
+    resaleValue: Int;
+}
+
+message ReportResaleCallback {
+    id: Int as uint224;
 }
 
 message(0x05138d91) OwnershipAssigned {
@@ -162,9 +201,11 @@ struct ItemCreateData {
     artistAddress: Address;
 }
 
-struct TitleArtist {
+struct IndividualContent {
     title: String;
     artist: String;
+    lastResaleValue: Int?;
+    artistFingerprint: Int;
 }
 
 struct GetNftData {

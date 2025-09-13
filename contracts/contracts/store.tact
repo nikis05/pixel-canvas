@@ -1,10 +1,14 @@
 import "./collection.tact";
 import "./item.tact";
 import "./safe_transferable";
+import "@stdlib/stoppable";
 
-contract Store with SafeTransferable {
+contract Store with SafeTransferable, Resumable {
     owner: Address;
+    stopped: Bool = false;
+
     collection: Address;
+    itemPrice: Int;
 
     initialized: Bool = false;
 
@@ -13,13 +17,13 @@ contract Store with SafeTransferable {
     pendingPurchases: map<Int as uint224, Address> = emptyMap();
     numPendingPurchases: Int as uint10 = 0;
 
-    closed: Bool = false;
-
     exclusivesOffered: map<Int as uint32, Int> = emptyMap();
 
-    init(collection: Address) {
+    init(collection: Address, itemPrice: Int) {
+        require(itemPrice >= ton("0.5"), "Price is too low");
         self.owner = sender();
         self.collection = collection;
+        self.itemPrice = itemPrice;
     }
 
     receive() {
@@ -35,8 +39,7 @@ contract Store with SafeTransferable {
     }
 
     receive(msg: Bake) {
-        require(!self.closed, "The shop is temporarily closed");
-
+        self.requireNotStopped();
         if (msg.giftTo != null) {
             self.requireOwner();
             require(msg.offerExclusive == null, "Cannot giftTo and offerExclusive in the same message");
@@ -46,7 +49,7 @@ contract Store with SafeTransferable {
             require(context().value == ton("0.5"), "Invalid message value");
             require(msg.offerExclusive!! >= ton("0.5"), "Price is too low");
         } else {
-            require(context().value == ton("4.99"), "Invalid message value");
+            require(context().value == self.itemPrice, "Invalid message value");
         }
 
         require(self.numPendingPurchases <= 1000, "Too many pending requests, try again later");
@@ -95,6 +98,7 @@ contract Store with SafeTransferable {
     }
 
     receive(msg: PurchaseExclusive) {
+        self.requireNotStopped();
         let itemIndex: Int = msg.itemIndex;
         let itemPrice: Int? = self.exclusivesOffered.get(itemIndex);
         require(itemPrice != null, "No such item");
@@ -154,13 +158,16 @@ contract Store with SafeTransferable {
         });
     }
 
-    receive(msg: SetClosed) {
+    receive(msg: SetItemPrice) {
         self.requireOwner();
-        self.closed = msg.closed;
+        require(msg.newPrice >= ton("0.5"), "Price is too low");
+        self.itemPrice = msg.newPrice;
+        cashback(sender());
     }
 
     receive(msg: Terminate) {
         self.requireOwner();
+        self.requireStopped();
         require(self.numPendingPurchases == 0, "There are purchases still being processed");
         message(MessageParameters {
             to: self.owner,
@@ -172,6 +179,10 @@ contract Store with SafeTransferable {
 
     get fun exclusives_offered(): map<Int as uint32, Int> {
         return self.exclusivesOffered;
+    }
+
+    get fun item_price(): Int {
+        return self.itemPrice;
     }
 
     fun closePurchase(id: Int) {
@@ -214,7 +225,7 @@ message(0x2365d020) Withdraw {}
 
 message(0xb722c4ae) Terminate {}
 
-message SetClosed { closed: Bool }
+message SetItemPrice { newPrice: Int }
 
 struct ForwardPayloadCustom {
     price: Int;

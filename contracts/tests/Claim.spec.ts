@@ -53,13 +53,9 @@ describe('Claim', () => {
         expect(deployResult.transactions).toHaveTransaction({
             from: claim.address,
             to: callbackRecipient.address,
-            value: toNano('0.05') - getTransactionFees(deployResult.transactions[1]).total,
             inMessageBounceable: false,
             body: claimSuccess.endCell(),
         });
-
-        const blockchainClaim = await blockchain.getContract(claim.address);
-        expect(blockchainClaim.balance).toBe(toNano(0));
     });
 
     it('self-destructs if created by wrong sender', async () => {
@@ -169,8 +165,5 @@ describe('Claim', () => {
             to: deployer.address,
             inMessageBounced: true,
         });
-
-        const blockchainClaim = await blockchain.getContract(claim.address);
-        expect(blockchainClaim.balance).toBe(toNano(0));
     });
 });
