@@ -872,6 +872,8 @@ describe('Item', () => {
 
             const returnedDna = await item.getDna();
             expect(returnedDna).toEqualCell(dna);
+
+            const test = await blockchain.runGetMethod(item.address, 'dna');
         });
     });
 });

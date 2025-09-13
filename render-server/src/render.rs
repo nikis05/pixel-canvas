@@ -1,10 +1,10 @@
-use crate::{dna::Dna, render::colors::COLORS};
+use crate::dna::Dna;
 use bytes::{BufMut, Bytes, BytesMut};
 use image::{RgbImage, codecs::png::PngEncoder};
 use itertools::Itertools;
 use std::iter;
 
-mod colors;
+static COLORS: phf::Map<u8, image::Rgb<u8>> = rust_colors::colors!();
 
 pub async fn render(dna: Dna) -> Bytes {
     tokio_rayon::spawn_fifo(move || {

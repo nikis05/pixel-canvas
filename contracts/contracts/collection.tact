@@ -216,7 +216,7 @@ contract Collection with SafeTransferable, Resumable {
 
         let image: Cell = beginTailString()
             .concat(self.imageUrl)
-            .concat(index.toString())
+            .concat(contractAddress(initOf Item(myAddress(), index)).toString())
             .toCell();
 
         let nftContent: map<Int as uint256, Cell> = emptyMap();
@@ -310,17 +310,17 @@ inline fun validateDna(cell: Cell): Bool {
                 return false;
             }
             if (isLeftmostBranch) {
-                if (level2Slice.refs() != 3) {
+                if (!hasAllRefs(level2Slice)) {
                     return false;
                 }
-                repeat (2) {
+                repeat (3) {
                     let level3Slice: Slice = level2Slice.loadRef().asSlice();
                     if (!isFullSlice(level3Slice) || !hasNoRefs(level3Slice)) {
                         return false;
                     }
                 }
-                let level3Slice3: Slice = level2Slice.loadRef().asSlice();
-                if (level3Slice3.bits() != 24 || !hasNoRefs(level3Slice3)) {
+                let level3Slice4: Slice = level2Slice.loadRef().asSlice();
+                if (level3Slice4.bits() != 24 || !hasNoRefs(level3Slice4)) {
                     return false;
                 }
                 isLeftmostBranch = false;

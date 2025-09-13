@@ -3,21 +3,25 @@
 use crate::{
     dna::Dna,
     storage::{Path, Storage},
+    viewer::{Viewer, ViewerError},
 };
 use axum::{
     Router,
     body::Body,
+    extract,
     http::{StatusCode, header},
     response::IntoResponse,
     routing::{self},
 };
+use either::Either;
 use futures::TryStreamExt;
 use serde::Deserialize;
-use std::str::FromStr;
+use tonlib_core::TonAddress;
 
 mod dna;
 mod render;
 mod storage;
+mod viewer;
 
 #[derive(Deserialize)]
 struct Env {
@@ -29,6 +33,8 @@ struct Env {
     s3_access_key: Option<String>,
     s3_secret_key: Option<String>,
     s3_bucket_name: Option<String>,
+    viewer_api_url: String,
+    viewer_api_key: Option<String>,
 }
 
 fn capture_error(err: &anyhow::Error) {
@@ -36,6 +42,7 @@ fn capture_error(err: &anyhow::Error) {
     eprintln!("{err}");
 }
 
+#[allow(clippy::too_many_lines)]
 #[tokio::main]
 async fn main() {
     let env = envy::from_env::<Env>().unwrap();
@@ -65,16 +72,33 @@ async fn main() {
         ));
     }
 
+    let viewer = Viewer::new(env.viewer_api_url, env.viewer_api_key);
+
     let app = Router::new()
         .route(
-            "/img",
+            "/img/:item_index",
             routing::get({
-                async move |raw_dna: String| {
-                    let dna = match Dna::from_str(&raw_dna) {
+                async move |item_index: extract::Path<TonAddress>| {
+                    let item_index = item_index.0;
+                    let raw_dna = match viewer.get_dna(item_index).await {
+                        Ok(raw_dna) => raw_dna,
+                        Err(Either::Left(ViewerError::OverCapacity)) => {
+                            return (StatusCode::TOO_MANY_REQUESTS, "Too Many Requests")
+                                .into_response();
+                        }
+                        Err(Either::Right(err)) => {
+                            capture_error(&err);
+                            return (StatusCode::INTERNAL_SERVER_ERROR, "Internal Error")
+                                .into_response();
+                        }
+                    };
+
+                    let dna = match Dna::from_boc(&raw_dna) {
                         Ok(parsed_dna) => parsed_dna,
                         Err(err) => {
                             capture_error(&err);
-                            return (StatusCode::BAD_REQUEST, "Invalid DNA").into_response();
+                            return (StatusCode::INTERNAL_SERVER_ERROR, "Internal Error")
+                                .into_response();
                         }
                     };
 
