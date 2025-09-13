@@ -2377,6 +2377,7 @@ dependencies = [
  "futures-retry",
  "image",
  "itertools 0.14.0",
+ "num-bigint",
  "phf",
  "reqwest",
  "rust-colors",

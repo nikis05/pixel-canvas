@@ -1602,9 +1602,8 @@ describe('Collection', () => {
                 new Builder().storeInt(0x00, 8).storeStringTail(expectedDescription).endCell(),
             );
 
-            const nftAddress = (await Item.fromInit(collection.address, BigInt(9))).address;
             expect(dictionary.get(await hashToInt('image'))).toEqualCell(
-                new Builder().storeInt(0x00, 8).storeStringTail(`https://example.com/${nftAddress}`).endCell(),
+                new Builder().storeInt(0x00, 8).storeStringTail(`https://example.com/9`).endCell(),
             );
         });
     });
