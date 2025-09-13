@@ -8,10 +8,6 @@ export async function run(provider: NetworkProvider) {
     const ui = provider.ui();
 
     const imageUrl = await ui.input('Enter image url');
-    const nftDescription = new Builder()
-        .storeInt(0x00, 8)
-        .storeStringTail(await ui.input('Enter NFT description'))
-        .endCell();
 
     const collectionName = 'Pixel Canvas';
     const collectionDescription = await ui.input('Enter collection description');
@@ -30,9 +26,7 @@ export async function run(provider: NetworkProvider) {
 
     const collectionContent = new Builder().storeUint(0x00, 8).storeDict(metadata).endCell();
 
-    const collection = provider.open(
-        await Collection.fromInit(BigInt(50000), imageUrl, nftDescription, collectionContent),
-    );
+    const collection = provider.open(await Collection.fromInit(BigInt(50000), imageUrl, collectionContent));
 
     await collection.send(
         provider.sender(),
