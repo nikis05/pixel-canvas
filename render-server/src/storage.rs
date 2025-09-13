@@ -59,9 +59,9 @@ impl Storage {
 pub struct Path(String);
 
 impl Path {
-    pub fn for_dna(dna: &Dna) -> Self {
+    pub fn for_image(dna: &Dna) -> Self {
         let digest = Sha256::digest(dna.bytes());
         let base64 = base64::engine::general_purpose::STANDARD.encode(digest);
-        Self(base64)
+        Self(format!("image/{base64}"))
     }
 }

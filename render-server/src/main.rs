@@ -102,7 +102,7 @@ async fn main() {
                         }
                     };
 
-                    let path = Path::for_dna(&dna);
+                    let path = Path::for_image(&dna);
 
                     let existing_file = if let Some(storage) = &storage {
                         match storage.get(&path).await {
