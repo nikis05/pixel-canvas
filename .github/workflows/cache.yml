@@ -3,8 +3,8 @@ on:
   push:
     branches: [main]
 jobs:
-  contracts:
-    name: Contracts
+  js:
+    name: JS
     runs-on: self-hosted
     steps:
       - name: Setup Node
@@ -33,14 +33,19 @@ jobs:
       - name: NPM install
         if: steps.lookup-cache.outputs.cache-hit != 'true'
         run: cd contracts && npm i
-  render-server:
-    name: Render server
+  rust:
+    name: Rust
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v5
         if: steps.lookup-cache.outputs.cache-hit != 'true'
         with:
-          sparse-checkout: render-server
+          sparse-checkout: |
+            Cargo.toml
+            Cargo.lock
+            render-server
+            rust-colors
+            palette.json
       - uses: actions/cache/restore@v4
         id: lookup-cache
         with:
@@ -49,7 +54,7 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            render-server/target/
+            target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           lookup-only: true
       - name: Setup Rust
@@ -66,9 +71,9 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            render-server/target/
+            target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
       - name: Clippy
         if: steps.lookup-cache.outputs.cache-hit != 'true'
-        run: cd render-server && cargo clippy --locked
+        run: cargo clippy --locked

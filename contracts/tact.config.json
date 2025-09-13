@@ -2,16 +2,6 @@
   "$schema": "https://raw.githubusercontent.com/tact-lang/tact/main/src/config/configSchema.json",
   "projects": [
     {
-      "name": "SimpleCounter",
-      "path": "contracts/simple_counter.tact",
-      "output": "build/SimpleCounter",
-      "options": {
-        "debug": false,
-        "external": false
-      },
-      "mode": "full"
-    },
-    {
       "name": "Collection",
       "path": "contracts/collection.tact",
       "output": "build/Collection",

@@ -43,7 +43,6 @@ export function makeDna({
     missingLevel2Cell = false,
     nonFullLevel2Cell = false,
     missingLevel3Cell = false,
-    extraneousLevel3CellLeftmostBranch = false,
     extraneousLevel3CellOtherBranch = false,
     nonFullLevel3Cell = false,
     incorrectSizeLevel3CellRightmost = false,
@@ -57,7 +56,6 @@ export function makeDna({
     missingLevel2Cell?: boolean;
     nonFullLevel2Cell?: boolean;
     missingLevel3Cell?: boolean;
-    extraneousLevel3CellLeftmostBranch?: boolean;
     extraneousLevel3CellOtherBranch?: boolean;
     nonFullLevel3Cell?: boolean;
     incorrectSizeLevel3CellRightmost?: boolean;
@@ -78,14 +76,10 @@ export function makeDna({
         level3Rightmost.storeRef(new Builder().storeBit(true));
     }
 
-    const level2Leftmost = new Builder().storeUint(fillWith, 1023).storeRef(level3).storeRef(level3);
+    const level2Leftmost = new Builder().storeUint(fillWith, 1023).storeRef(level3).storeRef(level3).storeRef(level3);
 
     if (!missingLevel3Cell) {
         level2Leftmost.storeRef(level3Rightmost);
-    }
-
-    if (extraneousLevel3CellLeftmostBranch) {
-        level2Leftmost.storeRef(level3);
     }
 
     const level2 = new Builder().storeUint(fillWith, nonFullLevel2Cell ? 1022 : 1023);

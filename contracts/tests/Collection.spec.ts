@@ -818,8 +818,6 @@ describe('Collection', () => {
 
             it('missing level 3 cell', testWithDna({ nonFullLevel3Cell: true }));
 
-            it('extraneous level 3 cell (leftmost branch)', testWithDna({ extraneousLevel3CellLeftmostBranch: true }));
-
             it('extraneous level 3 cell (other branch)', testWithDna({ extraneousLevel3CellOtherBranch: true }));
 
             it('non-full level 3 cell', testWithDna({ nonFullLevel3Cell: true }));
@@ -1604,8 +1602,9 @@ describe('Collection', () => {
                 new Builder().storeInt(0x00, 8).storeStringTail(expectedDescription).endCell(),
             );
 
+            const nftAddress = (await Item.fromInit(collection.address, BigInt(9))).address;
             expect(dictionary.get(await hashToInt('image'))).toEqualCell(
-                new Builder().storeInt(0x00, 8).storeStringTail('https://example.com/9').endCell(),
+                new Builder().storeInt(0x00, 8).storeStringTail(`https://example.com/${nftAddress}`).endCell(),
             );
         });
     });
