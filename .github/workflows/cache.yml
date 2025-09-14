@@ -17,7 +17,11 @@ jobs:
         run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
       - uses: actions/checkout@v5
         with:
-          sparse-checkout: contracts
+          sparse-checkout: |
+            package.json
+            package-lock.json
+            app
+            contracts
       - uses: actions/cache/restore@v4
         id: lookup-cache
         with:
@@ -32,7 +36,7 @@ jobs:
           restore-keys: ${{ runner.os }}-node-
       - name: NPM install
         if: steps.lookup-cache.outputs.cache-hit != 'true'
-        run: cd contracts && npm i
+        run: npm i
   rust:
     name: Rust
     runs-on: self-hosted
