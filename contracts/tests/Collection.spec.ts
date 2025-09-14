@@ -366,7 +366,6 @@ describe('Collection', () => {
                 {
                     $$type: 'SetDisplaySettings',
                     imageUrl: 'https://new.example.com',
-                    description: new Builder().storeInt(0x00, 8).storeStringTail('bar').endCell(),
                     collectionContent: newCollectionContent,
                 },
             );
@@ -419,7 +418,6 @@ describe('Collection', () => {
                 {
                     $$type: 'SetDisplaySettings',
                     imageUrl: 'https://new.example.com/',
-                    description: new Builder().storeInt(0x00, 8).storeStringTail('description').endCell(),
                     collectionContent: new Builder().storeInt(2, 4).endCell(),
                 },
             );

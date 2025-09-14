@@ -237,7 +237,6 @@ message SetResaleReporter { resaleReporterAddress: Address? }
 
 message SetDisplaySettings {
     imageUrl: String;
-    description: Cell;
     collectionContent: Cell;
 }
 
