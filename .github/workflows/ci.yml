@@ -13,7 +13,11 @@ jobs:
           node-version: "22.18.0"
       - uses: actions/checkout@v5
         with:
-          sparse-checkout: contracts
+          sparse-checkout: |
+            package.json
+            package-lock.json
+            app
+            contracts
       - name: Get npm cache directory
         id: npm-cache-dir
         shell: bash
@@ -24,9 +28,11 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: ${{ runner.os }}-node-
       - name: NPM install
-        run: cd contracts && npm i
-      - name: Run tests
+        run: npm i
+      - name: Test contracts
         run: cd contracts && npx blueprint build --all && npm test
+      - name: ESlint app
+        run: cd app && npm run lint
   rust:
     name: Rust
     runs-on: self-hosted

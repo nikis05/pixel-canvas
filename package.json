@@ -1,0 +1,7 @@
+{
+  "name": "canvas",
+  "workspaces": [
+    "contracts",
+    "app"
+  ]
+}
