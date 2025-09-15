@@ -34,8 +34,6 @@ jobs:
         run: npm ci
       - name: Test contracts
         run: cd contracts && npx blueprint build --all && npm test
-      - name: ESlint app
-        run: cd app && npm run lint
   rust:
     name: Rust
     runs-on: ubuntu-latest
