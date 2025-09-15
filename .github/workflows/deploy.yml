@@ -8,7 +8,7 @@ concurrency:
 jobs:
   fender-server:
     name: Render server
-    runs-on: debian-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -39,7 +39,7 @@ jobs:
           cache-to: type=registry,ref=${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache,mode=max
   app:
     name: App to GH pages
-    runs-on: debian-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Setup node
         uses: actions/setup-node@v3

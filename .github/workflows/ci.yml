@@ -8,7 +8,7 @@ concurrency:
 jobs:
   js:
     name: JS
-    runs-on: debian-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Setup Node
         uses: actions/setup-node@v5
@@ -38,7 +38,7 @@ jobs:
         run: cd app && npm run lint
   rust:
     name: Rust
-    runs-on: debian-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
