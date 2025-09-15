@@ -2,10 +2,13 @@ name: CI
 on:
   pull_request:
     branches: [main]
+cuncurrency:
+  group: ${{ github.head_ref || github.ref_name }}-ci
+  cancel-in-progress: true
 jobs:
   js:
     name: JS
-    runs-on: self-hosted
+    runs-on: debian-latest
     steps:
       - name: Setup Node
         uses: actions/setup-node@v5
@@ -28,14 +31,14 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: ${{ runner.os }}-node-
       - name: NPM install
-        run: npm i
+        run: npm ci
       - name: Test contracts
         run: cd contracts && npx blueprint build --all && npm test
       - name: ESlint app
         run: cd app && npm run lint
   rust:
     name: Rust
-    runs-on: self-hosted
+    runs-on: debian-latest
     steps:
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
