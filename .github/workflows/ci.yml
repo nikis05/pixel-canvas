@@ -2,7 +2,7 @@ name: CI
 on:
   pull_request:
     branches: [main]
-cuncurrency:
+concurrency:
   group: ${{ github.head_ref || github.ref_name }}-ci
   cancel-in-progress: true
 jobs:
