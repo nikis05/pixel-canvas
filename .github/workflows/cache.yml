@@ -2,10 +2,13 @@ name: Cache
 on:
   push:
     branches: [main]
+concurrency:
+  group: cache
+  cancel-in-progress: true
 jobs:
   js:
     name: JS
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Setup Node
         uses: actions/setup-node@v5
@@ -36,10 +39,10 @@ jobs:
           restore-keys: ${{ runner.os }}-node-
       - name: NPM install
         if: steps.lookup-cache.outputs.cache-hit != 'true'
-        run: npm i
+        run: npm ci
   rust:
     name: Rust
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         if: steps.lookup-cache.outputs.cache-hit != 'true'
