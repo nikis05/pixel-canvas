@@ -39,7 +39,7 @@ jobs:
           cache-to: type=registry,ref=${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache,mode=max
   app:
     name: App to GH pages
-    runs-on:
+    runs-on: debian-latest
     steps:
       - name: Setup node
         uses: actions/setup-node@v3
