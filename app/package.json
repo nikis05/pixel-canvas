@@ -3,11 +3,11 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "homepage": "https://nikis05.github.io/pixel-canvas/",
+  "homepage": "https://nikis05.github.io/pixel-canvas",
   "scripts": {
     "deploy": "gh-pages -d dist",
-    "dev": "vite",
-    "dev:https": "cross-env HTTPS=true vite",
+    "dev": "VITE_TC_MANIFEST_URL=https://nikis05.github.io/pixel-canvas/tonconnect-manifest.json vite",
+    "dev:https": "cross-env HTTPS=true VITE_TC_MANIFEST_URL=https://nikis05.github.io/pixel-canvas/tonconnect-manifest.json vite",
     "build": "tsc --noEmit && vite build",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix",
@@ -18,10 +18,17 @@
     "@telegram-apps/sdk-react": "^3.3.6",
     "@telegram-apps/telegram-ui": "^2.1.9",
     "@tonconnect/ui-react": "^2.2.0",
+    "classnames": "^2.5.1",
     "eruda": "^3.4.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.30.1"
+    "react-icons": "^5.5.0",
+    "react-konva": "^18.2.14",
+    "react-router-dom": "^6.30.1",
+    "react-rx": "^4.1.32",
+    "rxjs": "^7.8.2",
+    "usehooks-ts": "^3.1.1",
+    "zod": "^4.1.9"
   },
   "devDependencies": {
     "@eslint/js": "^9.23.0",
