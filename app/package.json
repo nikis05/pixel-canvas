@@ -8,11 +8,10 @@
     "deploy": "gh-pages -d dist",
     "dev": "VITE_TC_MANIFEST_URL=https://nikis05.github.io/pixel-canvas/tonconnect-manifest.json vite",
     "dev:https": "cross-env HTTPS=true VITE_TC_MANIFEST_URL=https://nikis05.github.io/pixel-canvas/tonconnect-manifest.json vite",
-    "build": "tsc --noEmit && vite build",
-    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "build": "vite build",
+    "lint": "tsc --noEmit && eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix",
-    "preview": "vite preview",
-    "predeploy": "npm run build"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@telegram-apps/sdk-react": "^3.3.6",

@@ -1,6 +1,5 @@
-import React, { FC, PropsWithChildren } from "react";
+import React, { FC } from "react";
 import { IconType } from "react-icons";
-import { BsFilePlus } from "react-icons/bs";
 import classNames from "classnames";
 
 type ToolMenuButtonPropsBase = {

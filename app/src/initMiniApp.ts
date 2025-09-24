@@ -17,7 +17,7 @@ import {
 /**
  * Initializes the application and configures its dependencies.
  */
-export async function init(): Promise<void> {
+export function init(): void {
   const launchParams = retrieveLaunchParams();
   const { tgWebAppPlatform: platform } = launchParams;
   const debug =
@@ -81,7 +81,7 @@ export async function init(): Promise<void> {
   }
 
   mountViewport.isAvailable() &&
-    mountViewport().then(() => {
+    void mountViewport().then(() => {
       bindViewportCssVars();
     });
 }
