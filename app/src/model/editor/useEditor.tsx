@@ -1,5 +1,5 @@
 import { map } from "rxjs";
-import { Color, Editor, Point, StateSnapshot } from ".";
+import { Color, Editor, LoadFromFileStatus, Point, StateSnapshot } from ".";
 import {
   createContext,
   FC,
@@ -13,6 +13,7 @@ import {
   useState,
 } from "react";
 import { useObservable } from "react-rx";
+import { saveAs } from "file-saver";
 
 const EditorContext = createContext<{
   editor: MutableRefObject<Editor>;
@@ -88,13 +89,18 @@ export type UseEditorOutput = {
   onDrawStart: () => void;
   onDrawEnd: () => void;
   clear: () => void;
+  loadFromFile: (file: File) => Promise<LoadFromFileStatus>;
+  saveToFile: (upscale: boolean) => Promise<void>;
+  copyDna: () => Promise<void>;
+  loadFromDna: (dna: string) => Promise<boolean>;
   undo: () => void;
   redo: () => void;
   mayUndo: boolean;
   mayRedo: boolean;
+  isEmpty: () => boolean;
 };
 
-export const useEditor = (): UseEditorOutput => {
+export function useEditor(): UseEditorOutput {
   const context = useContext(EditorContext);
   if (!context) throw new Error("Must be wrapped in EditorProvider");
   const { editor, isDrawing, color, setColor, brushSize, setBrushSize } =
@@ -116,7 +122,31 @@ export const useEditor = (): UseEditorOutput => {
 
   const clear = useCallback(() => editor.current.clear(), [editor]);
 
+  const loadFromFile = useCallback(
+    (file: File) => editor.current.loadFromFile(file),
+    [editor]
+  );
+
+  const saveToFile = useCallback(
+    async (upscale: boolean) => {
+      const file = await editor.current.renderFile(upscale);
+      saveAs(file, "pixel-canvas.png");
+    },
+    [editor]
+  );
+
+  const copyDna = useCallback(async () => {
+    const dna = await editor.current.getDna();
+    await navigator.clipboard.writeText(dna);
+  }, [editor, navigator]);
+
+  const loadFromDna = useCallback(
+    (dna: string) => editor.current.loadFromDna(dna),
+    [editor]
+  );
+
   const undo = useCallback(() => editor.current.undo(), [editor]);
+
   const redo = useCallback(() => editor.current.redo(), [editor]);
 
   const initAllowedActions = useMemo(
@@ -142,6 +172,8 @@ export const useEditor = (): UseEditorOutput => {
   );
   const mayRedo = useObservable(mayRedoObservable, initAllowedActions.redo);
 
+  const isEmpty = useCallback(() => editor.current.isEmpty, [editor]);
+
   const output = useMemo(
     () => ({
       color,
@@ -151,10 +183,15 @@ export const useEditor = (): UseEditorOutput => {
       onDrawStart,
       onDrawEnd,
       clear,
+      loadFromFile,
+      saveToFile,
+      copyDna,
+      loadFromDna,
       undo,
       redo,
       mayUndo,
       mayRedo,
+      isEmpty,
     }),
     [
       color,
@@ -164,22 +201,27 @@ export const useEditor = (): UseEditorOutput => {
       onDrawStart,
       onDrawEnd,
       clear,
+      loadFromFile,
+      saveToFile,
+      copyDna,
+      loadFromDna,
       undo,
       redo,
       mayUndo,
       mayRedo,
+      isEmpty,
     ]
   );
 
   return output;
-};
+}
 
 export type UsePixelOutput = {
   color: Color;
   onEnter: () => void;
 };
 
-export const usePixel = (point: Point): UsePixelOutput => {
+export function usePixel(point: Point): UsePixelOutput {
   const context = useContext(PixelContext);
   if (!context) throw new Error("Must be wrapped in EditorProvider");
   const { editor, isDrawing, editorState, brushSize } = context;
@@ -194,4 +236,4 @@ export const usePixel = (point: Point): UsePixelOutput => {
   const output = useMemo(() => ({ color, onEnter }), [color, onEnter]);
 
   return output;
-};
+}

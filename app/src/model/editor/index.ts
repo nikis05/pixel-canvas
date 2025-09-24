@@ -1,18 +1,23 @@
 import { Observable, Subject } from "rxjs";
 import * as z from "zod";
 import colors from "../../../../palette.json";
+import type { ParseImageResponse } from "image-codec";
 
 export type Point = { x: number; y: number };
 
 export class Color {
-  private constructor(private value: number) {}
+  private constructor(private _value: number) {}
 
   is(other: Color): boolean {
-    return this.value == other.value;
+    return this._value == other._value;
   }
 
   toHex() {
-    return `#${colors[this.value]}`;
+    return `#${colors[this._value]}`;
+  }
+
+  get value(): number {
+    return this._value;
   }
 
   static black(): Color {
@@ -21,6 +26,10 @@ export class Color {
 
   static white(): Color {
     return new Color(63);
+  }
+
+  static fromUncheckedInt(int: number): Color {
+    return new Color(int);
   }
 
   static palette(): Color[] {
@@ -38,7 +47,11 @@ export class StateSnapshot {
   protected constructor(protected data: Color[][]) {}
 
   readPoint(point: Point): Color {
-    return this.data[point.x][point.y] ?? Color.white();
+    return this.data[point.y][point.x] ?? Color.white();
+  }
+
+  toData(): number[][] {
+    return this.data.map((row) => row.map((color) => color.value));
   }
 }
 
@@ -48,7 +61,7 @@ export class State extends StateSnapshot {
   }
 
   editPoint(point: Point, color: Color) {
-    this.data[point.x][point.y] = color;
+    this.data[point.y][point.x] = color;
   }
 
   snapshot(): StateSnapshot {
@@ -61,12 +74,20 @@ export class State extends StateSnapshot {
     );
   }
 
+  static fromUncheckedData(data: number[][]): State {
+    return new State(
+      data.map((row) => row.map((color) => Color.fromUncheckedInt(color)))
+    );
+  }
+
   static PARSER = z
     .array(z.array(Color.PARSER))
     .transform((data) => new State(data));
 }
 
 export type Edit = { from: [Point, Color][]; to: Color };
+
+export type LoadFromFileStatus = ParseImageResponse["status"];
 
 export class Editor {
   private _stateObservable = new Subject<StateSnapshot>();
@@ -77,7 +98,8 @@ export class Editor {
   private constructor(
     private state: State,
     private undoStack: Edit[],
-    private redoStack: Edit[]
+    private redoStack: Edit[],
+    private _isEmpty: boolean
   ) {}
 
   get stateObservable(): Observable<StateSnapshot> {
@@ -86,6 +108,10 @@ export class Editor {
 
   get allowedActionsObservable(): Observable<AllowedActions> {
     return this._allowedActionsObservable;
+  }
+
+  get isEmpty(): boolean {
+    return this._isEmpty;
   }
 
   stateSnapshot(): StateSnapshot {
@@ -100,6 +126,7 @@ export class Editor {
   }
 
   beginEdit(color: Color) {
+    this._isEmpty = false;
     this.inProgressEdit = {
       edit: { from: [], to: color },
       touchedPoints: new Set(),
@@ -188,26 +215,72 @@ export class Editor {
   }
 
   clear() {
-    this.state = State.empty();
-    this.inProgressEdit = null;
-    this.undoStack = [];
-    this.redoStack = [];
-    this.notifyState();
-    this.notifyAllowedActions();
+    this.replaceState(State.empty());
+    this._isEmpty = true;
+  }
+
+  async renderFile(upscale: boolean): Promise<Blob> {
+    const codec = await this.getCodec();
+    const image = codec.render_image(this.state.toData(), upscale);
+    return new Blob([image], { type: "image/png" });
+  }
+
+  async loadFromFile(file: File): Promise<LoadFromFileStatus> {
+    const codec = await this.getCodec();
+    const fileName = file.name;
+    const ext = fileName.substring(fileName.lastIndexOf(".") + 1);
+    const parsed = codec.parse_image(
+      ext,
+      new Uint8Array(await file.arrayBuffer())
+    );
+    if (parsed.status == "ok") {
+      this.replaceState(State.fromUncheckedData(parsed.data));
+    }
+    this._isEmpty = false;
+    return parsed.status;
+  }
+
+  async getDna(): Promise<string> {
+    const codec = await this.getCodec();
+    return codec.encode_dna(this.state.toData());
+  }
+
+  async loadFromDna(dna: string): Promise<boolean> {
+    const codec = await this.getCodec();
+    const result = codec.decode_dna(dna);
+    if (!result) return false;
+    this.replaceState(State.fromUncheckedData(result));
+    this._isEmpty = false;
+    return true;
   }
 
   static empty(): Editor {
-    return new Editor(State.empty(), [], []);
+    return new Editor(State.empty(), [], [], true);
   }
 
   static restore(json: string): Editor | null {
     try {
       const data = this.PARSER.parse(json);
-      const editor = new Editor(data.state, data.undo, data.redo);
+      const editor = new Editor(data.state, data.undo, data.redo, false);
       return editor;
     } catch (e) {
       return null;
     }
+  }
+
+  private async getCodec(): Promise<typeof import("image-codec")> {
+    const codec = await import("image-codec");
+    await codec.default();
+    return codec;
+  }
+
+  private replaceState(state: State) {
+    this.inProgressEdit = null;
+    this.undoStack = [];
+    this.redoStack = [];
+    this.state = state;
+    this.notifyState();
+    this.notifyAllowedActions();
   }
 
   private notifyAllowedActions() {
