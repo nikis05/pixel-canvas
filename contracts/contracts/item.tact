@@ -35,7 +35,7 @@ contract Item with Issuable {
         } else {
             let sender: Address = sender();
             require(sender == self.owner, "Not the owner");
-            require(myBalance() >= ton("0.1"), "Insufficient contract balance");
+            require(myBalance() >= ton("0.05"), "Insufficient contract balance");
             let ctx: Context = context();
             let coinsRemaining: Int = ctx.value;
             let forwardFee = ctx.readForwardFee();

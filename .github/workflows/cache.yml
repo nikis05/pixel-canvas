@@ -52,6 +52,7 @@ jobs:
             Cargo.lock
             render-server
             rust-colors
+            image-codec
             palette.json
       - uses: actions/cache/restore@v4
         id: lookup-cache

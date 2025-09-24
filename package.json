@@ -2,6 +2,7 @@
   "name": "canvas",
   "workspaces": [
     "contracts",
-    "app"
+    "app",
+    "image-codec/pkg"
   ]
 }

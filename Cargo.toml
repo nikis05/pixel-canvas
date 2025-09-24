@@ -1,11 +1,12 @@
 [workspace]
 resolver = "3"
-members = ["render-server", "rust-colors"]
+members = ["image-codec", "render-server", "rust-colors"]
 
 [workspace.dependencies]
 abort-on-drop = "0.2.2"
 anyhow = "1.0.98"
 axum = "0.8.4"
+base64 = "0.22.1"
 bitvec = "1.0.1"
 bytes = "1.10.1"
 either = "1.15.0"
@@ -16,7 +17,9 @@ futures-retry = "0.6.0"
 hex = "0.4.3"
 image = "0.25.6"
 itertools = "0.14.0"
+js-sys = "0.3.80"
 num-bigint = "0.4.6"
+num-traits = "0.2.19"
 phf = { version = "0.12.1", features = ["macros"] }
 reqwest = { version = "0.12.23" }
 rust-s3 = "0.35.1"
@@ -29,3 +32,4 @@ tonlib-core = "0.26.1"
 proc-macro2 = "1.0.101"
 syn = "2.0.106"
 quote = "1.0.40"
+wasm-bindgen = "0.2.103"

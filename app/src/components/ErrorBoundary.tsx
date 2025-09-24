@@ -1,24 +1,23 @@
 import {
   Component,
-  type ComponentType,
   type GetDerivedStateFromError,
   type PropsWithChildren,
-  type ReactNode,
-} from 'react';
+} from "react";
 
-export interface ErrorBoundaryProps extends PropsWithChildren {
-  fallback?: ReactNode | ComponentType<{ error: unknown }>;
-}
-
-interface ErrorBoundaryState {
+export type ErrorBoundaryState = {
   error?: unknown;
-}
+};
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  PropsWithChildren,
+  ErrorBoundaryState
+> {
   state: ErrorBoundaryState = {};
 
-  // eslint-disable-next-line max-len
-  static getDerivedStateFromError: GetDerivedStateFromError<ErrorBoundaryProps, ErrorBoundaryState> = (error) => ({ error });
+  static getDerivedStateFromError: GetDerivedStateFromError<
+    PropsWithChildren,
+    ErrorBoundaryState
+  > = (error) => ({ error });
 
   componentDidCatch(error: Error) {
     this.setState({ error });
@@ -26,19 +25,25 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   render() {
     const {
-      state: {
-        error,
-      },
-      props: {
-        fallback: Fallback,
-        children,
-      },
+      state: { error },
+      props: { children },
     } = this;
 
-    return 'error' in this.state
-      ? typeof Fallback === 'function'
-        ? <Fallback error={error} />
-        : Fallback
-      : children;
+    return "error" in this.state ? (
+      <div>
+        <p>An unhandled error occurred:</p>
+        <blockquote>
+          <code>
+            {error instanceof Error
+              ? error.message
+              : typeof error === "string"
+                ? error
+                : JSON.stringify(error)}
+          </code>
+        </blockquote>
+      </div>
+    ) : (
+      children
+    );
   }
 }

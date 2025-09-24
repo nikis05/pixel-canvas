@@ -21,6 +21,7 @@ jobs:
             package-lock.json
             app
             contracts
+            image-codec/pkg
       - name: Get npm cache directory
         id: npm-cache-dir
         shell: bash
@@ -43,6 +44,8 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
       - uses: actions/checkout@v5
         with:
           sparse-checkout: |
@@ -50,6 +53,7 @@ jobs:
             Cargo.lock
             render-server
             rust-colors
+            image-codec
             palette.json
       - uses: actions/cache@v4
         with:
@@ -65,3 +69,10 @@ jobs:
         run: cargo clippy --locked
       - name: Rustfmt
         run: cargo fmt --check
+      - name: Run WasmPack
+        run: cd ./image-codec && wasm-pack build --target web
+      - name: Verify repo is clean
+        run: |
+          if ! git diff --quiet || ! git diff --cached --quiet; then
+            exit 1
+          fi

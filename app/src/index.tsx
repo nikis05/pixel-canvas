@@ -1,40 +1,42 @@
-// Include Telegram UI styles first to allow our code override the package CSS.
-import '@telegram-apps/telegram-ui/dist/styles.css';
+import "@telegram-apps/telegram-ui/dist/styles.css";
+import ReactDOM from "react-dom/client";
+import { StrictMode } from "react";
+import { retrieveLaunchParams } from "@telegram-apps/sdk-react";
+import { EnvUnsupported } from "@/components/EnvUnsupported.tsx";
+import { init as initMiniApp } from "@/initMiniApp.ts";
+import "./mockEnv.ts";
+import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
+import { TonConnectUIProvider } from "@tonconnect/ui-react";
+import { publicUrl } from "./utils/publicUrl.ts";
+import { App } from "./App.tsx";
+import "./index.css";
+import { Editor } from "./model/editor/index.ts";
+import { initEditor } from "./initEditor.ts";
+import { EditorProvider } from "./model/editor/useEditor.tsx";
+import { popup } from "@telegram-apps/sdk-react";
 
-import ReactDOM from 'react-dom/client';
-import { StrictMode } from 'react';
-import { retrieveLaunchParams } from '@telegram-apps/sdk-react';
-
-import { Root } from '@/components/Root.tsx';
-import { EnvUnsupported } from '@/components/EnvUnsupported.tsx';
-import { init } from '@/init.ts';
-
-import './index.css';
-
-// Mock the environment in case, we are outside Telegram.
-import './mockEnv.ts';
-
-const root = ReactDOM.createRoot(document.getElementById('root')!);
+const root = ReactDOM.createRoot(document.getElementById("root")!);
+const editor = initEditor();
 
 try {
-  const launchParams = retrieveLaunchParams();
-  const { tgWebAppPlatform: platform } = launchParams;
-  const debug = (launchParams.tgWebAppStartParam || '').includes('platformer_debug')
-    || import.meta.env.DEV;
-
-  // Configure all application dependencies.
-  await init({
-    debug,
-    eruda: debug && ['ios', 'android'].includes(platform),
-    mockForMacOS: platform === 'macos',
-  })
-    .then(() => {
-      root.render(
-        <StrictMode>
-          <Root/>
-        </StrictMode>,
-      );
-    });
+  await initMiniApp().then(() => {
+    root.render(
+      <StrictMode>
+        <ErrorBoundary>
+          <TonConnectUIProvider
+            manifestUrl={
+              import.meta.env.VITE_TC_MANIFEST_URL ||
+              publicUrl("tonconnect-manifest.json")
+            }
+          >
+            <EditorProvider editor={editor}>
+              <App />
+            </EditorProvider>
+          </TonConnectUIProvider>
+        </ErrorBoundary>
+      </StrictMode>
+    );
+  });
 } catch (e) {
-  root.render(<EnvUnsupported/>);
+  root.render(<EnvUnsupported />);
 }

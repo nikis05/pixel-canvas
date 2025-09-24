@@ -395,7 +395,7 @@ describe('Item', () => {
             await item.send(
                 deployer.getSender(),
                 {
-                    value: toNano('0.05'),
+                    value: toNano('0.04'),
                 },
                 {
                     $$type: 'Transfer',
