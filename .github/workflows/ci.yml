@@ -43,7 +43,9 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          components: rustfmt, clippy, wasm-pack
+          components: rustfmt, clippy
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
       - uses: actions/checkout@v5
         with:
           sparse-checkout: |
