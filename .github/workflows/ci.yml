@@ -75,7 +75,7 @@ jobs:
             package-lock.json
             app
             contracts
-            image-codec/pkg
+            image-codec
       - name: Get npm cache directory
         id: npm-cache-dir
         shell: bash
@@ -127,6 +127,8 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
+      - name: Install wasm-pack (for caching)
+        run: cargo install wasm-pack
       - name: Clippy
         run: cargo clippy --locked
       - name: Rustfmt
