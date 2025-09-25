@@ -33,8 +33,9 @@ jobs:
           sparse-checkout: |
             Cargo.toml
             Cargo.lock
-            image-codec
+            render-server/Cargo.toml
             rust-colors
+            image-codec
             palette.json
       - name: Restore Rust cache
         if: steps.lookup-wasm.outputs.cache-hit != 'true'
