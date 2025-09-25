@@ -50,7 +50,7 @@ jobs:
         id: lookup-wasm
         with:
           path: image-codec/pkg/
-          key: ${{ runner.os }}-wasm-${{ hashFiles('./image-codec/**') }}
+          key: ${{ runner.os }}-wasm-${{ hashFiles('image-codec/**') }}
           lookup-only: true
       - name: Setup Rust
         if: steps.lookup-wasm.outputs.cache-hit != 'true'
@@ -92,7 +92,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: image-codec/pkg/
-          key: ${{ runner.os }}-wasm-${{ hashFiles('./image-codec/**') }}
+          key: ${{ runner.os }}-wasm-${{ hashFiles('image-codec/**') }}
   app:
     name: App to GH pages
     needs: [wasm]
