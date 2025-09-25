@@ -41,8 +41,44 @@ jobs:
           tags: ${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:latest
           cache-from: type=registry,ref=${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache
           cache-to: type=registry,ref=${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache,mode=max
+  wasm:
+    name: WASM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lookup WASM
+        uses: actions/cache/restore@v4
+        id: lookup-wasm
+        with:
+          path: image-codec/pkg/
+          key: ${{ runner.os }}-wasm-${{ hashFiles('./image-codec/**') }}
+          lookup-only: true
+      - name: Setup Rust
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - name: Install wasm-pack
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        run: cargo install wasm-pack
+      - name: Restore Rust cache
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: image-codec/pkg/
+          key: ${{ runner.os }}-cargo-
+      - name: Build WASM
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        run: cd image-codec && wasm-pack build --release --target web
+      - name: Upload WASM
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: image-codec/pkg/
+          key: ${{ runner.os }}-wasm-${{ hashFiles('./image-codec/**') }}
   app:
     name: App to GH pages
+    needs: [wasm]
     runs-on: ubuntu-latest
     steps:
       - name: Setup node

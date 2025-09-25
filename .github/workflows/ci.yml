@@ -6,15 +6,52 @@ concurrency:
   group: ${{ github.head_ref || github.ref_name }}-ci
   cancel-in-progress: true
 jobs:
+  wasm:
+    name: WASM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lookup WASM
+        uses: actions/cache/restore@v4
+        id: lookup-wasm
+        with:
+          path: image-codec/pkg/
+          key: ${{ runner.os }}-wasm-${{ hashFiles('./image-codec/**') }}
+          lookup-only: true
+      - name: Setup Rust
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - name: Install wasm-pack
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        run: cargo install wasm-pack
+      - name: Restore Rust cache
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: image-codec/pkg/
+          key: ${{ runner.os }}-cargo-
+      - name: Build WASM
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        run: cd image-codec && wasm-pack build --target web
+      - name: Upload WASM
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: image-codec/pkg/
+          key: ${{ runner.os }}-wasm-${{ hashFiles('./image-codec/**') }}
   js:
     name: JS
+    needs: [wasm]
     runs-on: ubuntu-latest
     steps:
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
           node-version: "22.18.0"
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
         with:
           sparse-checkout: |
             package.json
@@ -26,11 +63,17 @@ jobs:
         id: npm-cache-dir
         shell: bash
         run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
-      - uses: actions/cache@v4
+      - name: Cache
+        uses: actions/cache@v4
         with:
           path: ${{ steps.npm-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: ${{ runner.os }}-node-
+      - name: Download WASM
+        uses: actions/cache/restore@v4
+        with:
+          path: /image-codec/pkg
+          key: ${{ runner.os }}-image-codec-${{ hashFiles('./image-codec/pkg/**') }}
       - name: NPM install
         run: npm ci
       - name: Test contracts
@@ -46,9 +89,8 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
-      - name: Install wasm-pack
-        run: cargo install wasm-pack
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
         with:
           sparse-checkout: |
             Cargo.toml
@@ -57,7 +99,8 @@ jobs:
             rust-colors
             image-codec
             palette.json
-      - uses: actions/cache@v4
+      - name: Cache
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/bin/
@@ -71,10 +114,3 @@ jobs:
         run: cargo clippy --locked
       - name: Rustfmt
         run: cargo fmt --check
-      - name: Run WasmPack
-        run: cd ./image-codec && wasm-pack build --target web && rm ./image-codec/pkg/.gitignore
-      - name: Verify repo is clean
-        run: |
-          if ! git diff --quiet || ! git diff --cached --quiet; then
-            exit 1
-          fi
