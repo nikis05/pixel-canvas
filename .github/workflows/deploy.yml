@@ -58,9 +58,6 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
-      - name: Install wasm-pack
-        if: steps.lookup-wasm.outputs.cache-hit != 'true'
-        run: cargo install wasm-pack
       - name: Checkout
         if: steps.lookup-wasm.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
@@ -68,7 +65,7 @@ jobs:
           sparse-checkout: |
             Cargo.toml
             Cargo.lock
-            render-server/Cargo.toml
+            render-server
             rust-colors
             image-codec
             palette.json
@@ -84,6 +81,9 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
+      - name: Install wasm-pack
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        run: cargo install wasm-pack
       - name: Build WASM
         if: steps.lookup-wasm.outputs.cache-hit != 'true'
         run: cd image-codec && wasm-pack build --release --target web
