@@ -72,7 +72,7 @@ jobs:
       - name: Rustfmt
         run: cargo fmt --check
       - name: Run WasmPack
-        run: cd ./image-codec && wasm-pack build --target web
+        run: cd ./image-codec && wasm-pack build --target web && rm ./image-codec/pkg/gitignore
       - name: Verify repo is clean
         run: |
           if ! git diff --quiet || ! git diff --cached --quiet; then
