@@ -26,6 +26,16 @@ jobs:
       - name: Install wasm-pack
         if: steps.lookup-wasm.outputs.cache-hit != 'true'
         run: cargo install wasm-pack
+      - name: Checkout
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            Cargo.toml
+            Cargo.lock
+            image-codec
+            rust-colors
+            palette.json
       - name: Restore Rust cache
         if: steps.lookup-wasm.outputs.cache-hit != 'true'
         uses: actions/cache/restore@v4
