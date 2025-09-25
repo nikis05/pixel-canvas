@@ -45,12 +45,15 @@ jobs:
     name: WASM
     runs-on: ubuntu-latest
     steps:
+      - name: Determine cache key
+        id: cache-key
+        run: echo "KEY=${{ hashFiles('image-codec/**') }}" >> "$GITHUB_OUTPUT"
       - name: Lookup WASM
         uses: actions/cache/restore@v4
         id: lookup-wasm
         with:
           path: image-codec/pkg/
-          key: ${{ runner.os }}-wasm-${{ hashFiles('image-codec/**') }}
+          key: ${{ runner.os }}-wasm-${{ steps.cache-key.outputs.key }}
           lookup-only: true
       - name: Setup Rust
         if: steps.lookup-wasm.outputs.cache-hit != 'true'
