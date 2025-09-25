@@ -30,8 +30,14 @@ jobs:
         if: steps.lookup-wasm.outputs.cache-hit != 'true'
         uses: actions/cache/restore@v4
         with:
-          path: image-codec/pkg/
-          key: ${{ runner.os }}-cargo-
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
       - name: Build WASM
         if: steps.lookup-wasm.outputs.cache-hit != 'true'
         run: cd image-codec && wasm-pack build --target web
