@@ -1,6 +1,6 @@
 import { Observable, Subject } from "rxjs";
 import * as z from "zod";
-import colors from "../../../../palette.json";
+import colors from "@root/palette.json";
 import type { ParseImageResponse } from "image-codec";
 
 export type Point = { x: number; y: number };
