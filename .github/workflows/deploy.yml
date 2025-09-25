@@ -111,7 +111,13 @@ jobs:
             package.json
             package-lock.json
             contracts/package.json
+            image-codec
             app
+      - name: Download WASM
+        uses: actions/cache/restore@v4
+        with:
+          path: image-codec/pkg/
+          key: ${{ runner.os }}-wasm-${{ hashFiles('image-codec/**') }}
       - name: NPM install
         run: npm ci --workspace app
       - name: Build
