@@ -70,7 +70,7 @@ export class State extends StateSnapshot {
 
   static empty(): State {
     return new State(
-      Array.from({ length: 64 }, () => new Array(64).fill(Color.white()))
+      Array.from({ length: 64 }, () => new Array<Color>(64).fill(Color.white()))
     );
   }
 
@@ -187,7 +187,7 @@ export class Editor {
     if (!edit || this.inProgressEdit) {
       throw new Error("Redo is not allowed");
     }
-    for (const [point, _] of edit.from) {
+    for (const [point] of edit.from) {
       this.state.editPoint(point, edit.to);
     }
     this.undoStack.push(edit);
@@ -263,7 +263,7 @@ export class Editor {
       const data = this.PARSER.parse(json);
       const editor = new Editor(data.state, data.undo, data.redo, false);
       return editor;
-    } catch (e) {
+    } catch {
       return null;
     }
   }

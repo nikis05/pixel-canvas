@@ -14,6 +14,7 @@ import { ChangeEvent, FC, useCallback, useState } from "react";
 import { BsClipboard, BsFileArrowUp } from "react-icons/bs";
 import { useIsMounted } from "usehooks-ts";
 import { confirmReplace } from "./replaceAlert";
+import { toVoid } from "@/utils/toVoid";
 
 export const UploadMenu: FC = () => {
   const { loadFromFile, loadFromDna, isEmpty } = useEditor();
@@ -28,7 +29,7 @@ export const UploadMenu: FC = () => {
   );
 
   const onFileSelected = useCallback(
-    async (e: ChangeEvent<HTMLInputElement>) => {
+    toVoid(async (e: ChangeEvent<HTMLInputElement>) => {
       if (!(await confirmReplace(isEmpty))) return;
       const file = e.target.files?.[0];
       if (!file) return;
@@ -37,16 +38,19 @@ export const UploadMenu: FC = () => {
       if (!isMounted()) return;
       setFileUploading(false);
       setFileUploadStatus(status);
-    },
+    }),
     [confirmReplace, setFileUploading, loadFromFile, isMounted]
   );
 
   const [dna, setDna] = useState<string>("");
 
-  const onDnaPaste = useCallback(async () => {
-    const dna = await navigator.clipboard.readText();
-    setDna(dna);
-  }, [navigator, setDna]);
+  const onDnaPaste = useCallback(
+    toVoid(async () => {
+      const dna = await navigator.clipboard.readText();
+      setDna(dna);
+    }),
+    [navigator, setDna]
+  );
 
   const onDnaChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -60,14 +64,17 @@ export const UploadMenu: FC = () => {
     null
   );
 
-  const onLoadFromDna = useCallback(async () => {
-    if (!(await confirmReplace(isEmpty))) return;
-    setLoadingFromDna(true);
-    const result = await loadFromDna(dna);
-    if (!isMounted()) return;
-    setLoadingFromDna(false);
-    setLoadFromDnaResult(result);
-  }, [loadFromDna, dna, isMounted, setLoadFromDnaResult]);
+  const onLoadFromDna = useCallback(
+    toVoid(async () => {
+      if (!(await confirmReplace(isEmpty))) return;
+      setLoadingFromDna(true);
+      const result = await loadFromDna(dna);
+      if (!isMounted()) return;
+      setLoadingFromDna(false);
+      setLoadFromDnaResult(result);
+    }),
+    [loadFromDna, dna, isMounted, setLoadFromDnaResult]
+  );
 
   const onLoadFromDnaSnackbarClose = useCallback(() => {
     setLoadFromDnaResult(null);

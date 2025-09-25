@@ -18,20 +18,23 @@ jobs:
         id: npm-cache-dir
         shell: bash
         run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
         with:
           sparse-checkout: |
             package.json
             package-lock.json
             app
             contracts
-      - uses: actions/cache/restore@v4
+      - name: Lookup cache
+        uses: actions/cache/restore@v4
         id: lookup-cache
         with:
           path: ${{ steps.npm-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           lookup-only: true
-      - uses: actions/cache@v4
+      - name: Cache
+        uses: actions/cache@v4
         if: steps.lookup-cache.outputs.cache-hit != 'true'
         with:
           path: ${{ steps.npm-cache-dir.outputs.dir }}
@@ -44,7 +47,8 @@ jobs:
     name: Rust
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
         if: steps.lookup-cache.outputs.cache-hit != 'true'
         with:
           sparse-checkout: |
@@ -54,7 +58,8 @@ jobs:
             rust-colors
             image-codec
             palette.json
-      - uses: actions/cache/restore@v4
+      - name: Lookup cache
+        uses: actions/cache/restore@v4
         id: lookup-cache
         with:
           path: |
@@ -71,7 +76,8 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
-      - uses: actions/cache@v4
+      - name: Cache
+        uses: actions/cache@v4
         if: steps.lookup-cache.outputs.cache-hit != 'true'
         with:
           path: |

@@ -1,22 +1,9 @@
 import { Section } from "@/components/Section";
-import { LoadFromFileStatus } from "@/model/editor";
 import { useEditor } from "@/model/editor/useEditor";
-import unreachable from "@/utils/unreachable";
-import {
-  Button,
-  FileInput,
-  Input,
-  List,
-  Snackbar,
-  Spinner,
-} from "@telegram-apps/telegram-ui";
-import { ChangeEvent, FC, useCallback, useState } from "react";
-import {
-  BsClipboard,
-  BsClipboardFill,
-  BsFileArrowDown,
-  BsFileArrowUp,
-} from "react-icons/bs";
+import { toVoid } from "@/utils/toVoid";
+import { Button, List, Snackbar, Spinner } from "@telegram-apps/telegram-ui";
+import { FC, useCallback, useState } from "react";
+import { BsClipboardFill, BsFileArrowDown } from "react-icons/bs";
 import { useIsMounted } from "usehooks-ts";
 
 export const DownloadMenu: FC = () => {
@@ -25,25 +12,31 @@ export const DownloadMenu: FC = () => {
 
   const [fileDownloading, setFileDownloading] = useState<boolean>(false);
 
-  const onFileDownloadRequested = useCallback(async () => {
-    setFileDownloading(true);
-    await saveToFile(false);
-    if (!isMounted()) return;
-    setFileDownloading(false);
-  }, [setFileDownloading, saveToFile, isMounted]);
+  const onFileDownloadRequested = useCallback(
+    toVoid(async () => {
+      setFileDownloading(true);
+      await saveToFile(false);
+      if (!isMounted()) return;
+      setFileDownloading(false);
+    }),
+    [setFileDownloading, saveToFile, isMounted]
+  );
 
   const [dnaCopying, setDnaCopying] = useState<boolean>(false);
 
   const [dnaCopiedSnackbarOpen, setDnaCopiedSnackbarOpen] =
     useState<boolean>(false);
 
-  const onCopyDna = useCallback(async () => {
-    setDnaCopying(true);
-    await copyDna();
-    if (!isMounted()) return;
-    setDnaCopying(false);
-    setDnaCopiedSnackbarOpen(true);
-  }, [setDnaCopying, copyDna, isMounted]);
+  const onCopyDna = useCallback(
+    toVoid(async () => {
+      setDnaCopying(true);
+      await copyDna();
+      if (!isMounted()) return;
+      setDnaCopying(false);
+      setDnaCopiedSnackbarOpen(true);
+    }),
+    [setDnaCopying, copyDna, isMounted]
+  );
 
   const onDnaCopiedSnackbarClosed = useCallback(
     () => setDnaCopiedSnackbarOpen(false),

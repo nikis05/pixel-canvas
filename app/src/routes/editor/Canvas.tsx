@@ -1,6 +1,5 @@
-import { Editor } from "@/model/editor";
-import React, { FC, useMemo, useRef } from "react";
-import { Stage, Layer, Rect, Text } from "react-konva";
+import React, { FC, useMemo } from "react";
+import { Stage, Layer } from "react-konva";
 import { Pixel } from "./Pixel";
 import { useEditor } from "@/model/editor/useEditor";
 

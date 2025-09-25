@@ -41,8 +41,65 @@ jobs:
           tags: ${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:latest
           cache-from: type=registry,ref=${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache
           cache-to: type=registry,ref=${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache,mode=max
+  wasm:
+    name: WASM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            Cargo.toml
+            Cargo.lock
+            render-server
+            rust-colors
+            image-codec
+            palette.json
+      - name: Determine cache key
+        id: cache-key
+        run: echo "KEY=${{ hashFiles('image-codec/**') }}" >> "$GITHUB_OUTPUT"
+      - name: Lookup WASM
+        uses: actions/cache/restore@v4
+        id: lookup-wasm
+        with:
+          path: image-codec/pkg/
+          key: ${{ runner.os }}-wasm-${{ steps.cache-key.outputs.key }}
+          lookup-only: true
+      - name: Setup Rust
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - name: Restore Rust cache
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+      - name: Install wasm-pack
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        uses: baptiste0928/cargo-install@v3
+        with:
+          crate: wasm-pack
+      - name: Build WASM
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        run: cd image-codec && wasm-pack build --release --target web
+      - name: Upload WASM
+        if: steps.lookup-wasm.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: image-codec/pkg/
+          key: ${{ runner.os }}-wasm-${{ steps.cache-key.outputs.key }}
   app:
     name: App to GH pages
+    needs: [wasm]
     runs-on: ubuntu-latest
     steps:
       - name: Setup node
@@ -56,7 +113,13 @@ jobs:
             package.json
             package-lock.json
             contracts/package.json
+            image-codec
             app
+      - name: Download WASM
+        uses: actions/cache/restore@v4
+        with:
+          path: image-codec/pkg/
+          key: ${{ runner.os }}-wasm-${{ hashFiles('image-codec/**') }}
       - name: NPM install
         run: npm ci --workspace app
       - name: Build

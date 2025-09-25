@@ -1,4 +1,3 @@
-import { Editor } from "@/model/editor";
 import { showPopup } from "@telegram-apps/sdk-react";
 
 export async function confirmReplace(isEmpty: () => boolean): Promise<boolean> {

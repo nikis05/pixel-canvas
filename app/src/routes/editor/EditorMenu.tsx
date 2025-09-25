@@ -14,9 +14,9 @@ import {
 } from "react-icons/bs";
 import { LuRedo2, LuUndo2 } from "react-icons/lu";
 import { UploadMenu } from "./UploadMenu";
-import { useIsMounted } from "usehooks-ts";
 import { DownloadMenu } from "./DownloadMenu";
 import { confirmReplace } from "./replaceAlert";
+import { toVoid } from "@/utils/toVoid";
 
 type Tool = "pencil" | "eraser";
 
@@ -65,10 +65,13 @@ export const EditorMenu: FC = () => {
     );
   }, [setCurrentColor, selectedTool, pickedColor]);
 
-  const onClear = useCallback(async () => {
-    if (!(await confirmReplace(isEmpty))) return;
-    clear();
-  }, [confirmReplace, isEmpty, clear]);
+  const onClear = useCallback(
+    toVoid(async () => {
+      if (!(await confirmReplace(isEmpty))) return;
+      clear();
+    }),
+    [confirmReplace, isEmpty, clear]
+  );
 
   return (
     <>

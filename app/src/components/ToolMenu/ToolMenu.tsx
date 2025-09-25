@@ -1,9 +1,5 @@
-import { FC, useRef } from "react";
+import { FC } from "react";
 import { ToolMenuButton, ToolMenuButtonProps } from "./ToolMenuButton";
-import { BiGhost } from "react-icons/bi";
-import { IconType } from "react-icons";
-import { useHover } from "usehooks-ts";
-import { useEditor } from "@/model/editor/useEditor";
 
 export type ToolMenuProps = {
   items: (ItemOptions | "divider")[];

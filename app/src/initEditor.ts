@@ -8,7 +8,7 @@ export function initEditor(): Editor {
 
   const backup = () => backupEditor(editor);
 
-  editor.stateObservable.pipe(debounceTime(3000)).forEach(backup);
+  void editor.stateObservable.pipe(debounceTime(3000)).forEach(backup);
 
   window.addEventListener("beforeunload", backup);
 
