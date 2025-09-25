@@ -15,7 +15,7 @@ jobs:
         id: lookup-wasm
         with:
           path: image-codec/pkg/
-          key: ${{ runner.os }}-wasm-${{ hashFiles('./image-codec/**') }}
+          key: ${{ runner.os }}-wasm-${{ hashFiles('image-codec/**') }}
           lookup-only: true
       - name: Setup Rust
         if: steps.lookup-wasm.outputs.cache-hit != 'true'
@@ -90,7 +90,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: /image-codec/pkg
-          key: ${{ runner.os }}-image-codec-${{ hashFiles('image-codec/pkg/**') }}
+          key: ${{ runner.os }}-image-codec-${{ hashFiles('image-codec/**') }}
       - name: NPM install
         run: npm ci
       - name: Test contracts
