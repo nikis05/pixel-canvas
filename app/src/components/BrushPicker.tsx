@@ -31,7 +31,7 @@ export const BrushPicker: FC<{
   );
 
   return (
-    <div className="h-full w-full flex flex-col items-center">
+    <div className="h-full w-full flex flex-col items-stretch">
       <div className="flex-1 flex">
         {brushSizes.map((i) => {
           const className = classNames(
