@@ -141,7 +141,7 @@ export const EditorMenu: FC = () => {
         ]}
       />
       <Modal handle={paletteModal} srText="Select brush size and color">
-        <div className="h-[min(75vh,_100vw)] w-[min(75vh,_100vw)]">
+        <div className="w-[min(75vh,_100vw)]">
           <BrushPicker
             brushSize={brushSize}
             onBrushSizeChange={setBrushSize}
