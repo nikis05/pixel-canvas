@@ -129,8 +129,6 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
-      - name: Install wasm-pack (for caching)
-        run: cargo install wasm-pack
       - name: Clippy
         run: cargo clippy --locked
       - name: Rustfmt

@@ -88,8 +88,6 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
-      - name: Install wasm-pack (for caching)
-        run: cargo install wasm-pack
       - name: Clippy
         if: steps.lookup-cache.outputs.cache-hit != 'true'
         run: cargo clippy --locked
