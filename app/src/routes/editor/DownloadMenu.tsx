@@ -3,7 +3,7 @@ import { useEditor } from "@/model/editor/useEditor";
 import { toVoid } from "@/utils/toVoid";
 import { Button, List, Snackbar, Spinner } from "@telegram-apps/telegram-ui";
 import { FC, useCallback, useState } from "react";
-import { BsClipboardFill, BsFileArrowDown } from "react-icons/bs";
+import { BsClipboardFill, BsFileArrowDown, BsFileImage } from "react-icons/bs";
 import { useIsMounted } from "usehooks-ts";
 
 export const DownloadMenu: FC = () => {
@@ -13,13 +13,22 @@ export const DownloadMenu: FC = () => {
   const [fileDownloading, setFileDownloading] = useState<boolean>(false);
 
   const onFileDownloadRequested = useCallback(
-    toVoid(async () => {
+    toVoid(async (upscale: boolean) => {
       setFileDownloading(true);
-      await saveToFile(false);
+      await saveToFile(upscale);
       if (!isMounted()) return;
       setFileDownloading(false);
     }),
     [setFileDownloading, saveToFile, isMounted]
+  );
+
+  const onFileDownloadRegular = useCallback(
+    () => onFileDownloadRequested(false),
+    [onFileDownloadRequested]
+  );
+  const onFileDownloadUpscaled = useCallback(
+    () => onFileDownloadRequested(true),
+    [onFileDownloadRequested]
   );
 
   const [dnaCopying, setDnaCopying] = useState<boolean>(false);
@@ -48,18 +57,28 @@ export const DownloadMenu: FC = () => {
       <List className="bg-(--tgui--secondary_color) mb-6">
         <Section
           Icon={BsFileArrowDown}
-          title="Save image"
-          description="Save image as a PNG file"
+          title="Save image (regular)"
+          description="Save image as a PNG file with real pixel size"
         >
           <div className="mt-4 flex items-center">
-            <Button onClick={onFileDownloadRequested}>Save image</Button>
+            <Button onClick={onFileDownloadRegular}>Save image</Button>
+            {fileDownloading && <Spinner size="s" />}
+          </div>
+        </Section>
+        <Section
+          Icon={BsFileImage}
+          title="Save image (upscaled)"
+          description="Save image as a PNG file with increased pixel size"
+        >
+          <div className="mt-4 flex items-center">
+            <Button onClick={onFileDownloadUpscaled}>Save image</Button>
             {fileDownloading && <Spinner size="s" />}
           </div>
         </Section>
         <Section
           Icon={BsClipboardFill}
           title="Copy DNA"
-          description="Enter image DNA string"
+          description="Copy image DNA string to clipboard"
         >
           <div className="mt-4 flex items-center">
             <Button onClick={onCopyDna}>Copy DNA</Button>

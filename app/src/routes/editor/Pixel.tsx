@@ -11,7 +11,7 @@ export const Pixel: FC<{ point: Point }> = React.memo(({ point }) => {
       y={point.y * 10}
       height={10}
       width={10}
-      onMouseEnter={onEnter}
+      onPointerEnter={onEnter}
       fill={color.toHex()}
     />
   );
