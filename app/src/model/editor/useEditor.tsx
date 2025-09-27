@@ -13,7 +13,9 @@ import {
   useState,
 } from "react";
 import { useObservable } from "react-rx";
-import { saveAs } from "file-saver";
+import { copyTextToClipboard } from "@telegram-apps/sdk-react";
+import { publicUrl } from "@/utils/publicUrl";
+import { openLink } from "@/utils/openLink";
 
 const EditorContext = createContext<{
   editor: MutableRefObject<Editor>;
@@ -129,15 +131,18 @@ export function useEditor(): UseEditorOutput {
 
   const saveToFile = useCallback(
     async (upscale: boolean) => {
-      const file = await editor.current.renderFile(upscale);
-      saveAs(file, "pixel-canvas.png");
+      let path = "/save-image#";
+      if (upscale) path += "u";
+      else path += "n";
+      path += await editor.current.getDna();
+      openLink(publicUrl(path));
     },
     [editor]
   );
 
   const copyDna = useCallback(async () => {
     const dna = await editor.current.getDna();
-    await navigator.clipboard.writeText(dna);
+    await copyTextToClipboard(dna);
   }, [editor, navigator]);
 
   const loadFromDna = useCallback(

@@ -14,12 +14,12 @@ export const Canvas: FC = React.memo(() => {
   );
 
   return (
-    <div className="aspect-square">
+    <div className="aspect-square border border-black">
       <Stage
         height={640}
         width={640}
-        onMouseDown={onDrawStart}
-        onMouseUp={onDrawEnd}
+        onPointerDown={onDrawStart}
+        onPoinerUp={onDrawEnd}
       >
         <Layer>
           {points.map((point) => (

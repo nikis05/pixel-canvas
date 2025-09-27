@@ -15,6 +15,8 @@ import { BsClipboard, BsFileArrowUp } from "react-icons/bs";
 import { useIsMounted } from "usehooks-ts";
 import { confirmReplace } from "./replaceAlert";
 import { toVoid } from "@/utils/toVoid";
+import { readTextFromClipboard } from "@telegram-apps/sdk-react";
+import { Link } from "@/components/Link";
 
 export const UploadMenu: FC = () => {
   const { loadFromFile, loadFromDna, isEmpty } = useEditor();
@@ -46,7 +48,7 @@ export const UploadMenu: FC = () => {
 
   const onDnaPaste = useCallback(
     toVoid(async () => {
-      const dna = await navigator.clipboard.readText();
+      const dna = (await readTextFromClipboard()) ?? "";
       setDna(dna);
     }),
     [navigator, setDna]
@@ -97,12 +99,9 @@ export const UploadMenu: FC = () => {
               Upload a file from your device. Supported formats: png, jpg, bmp.
               Note: the file must be exactly 64x64 pixels, and only
               contain&nbsp;
-              <a
-                className="text-(--tgui--link_color)"
-                href="https://nikis05.github.io/pixel-canvas/palette.json"
-              >
+              <Link href="https://nikis05.github.io/pixel-canvas/palette.json">
                 allowed colors
-              </a>
+              </Link>
               .
             </>
           }
@@ -157,9 +156,9 @@ export const UploadMenu: FC = () => {
             ) : fileUploadStatus == "wrong_palette" ? (
               <>
                 Please ensure that the image only contains{" "}
-                <a href="https://nikis05.github.io/pixel-canvas/palette.json">
+                <Link href="https://nikis05.github.io/pixel-canvas/palette.json">
                   allowed colos
-                </a>
+                </Link>
               </>
             ) : (
               unreachable(fileUploadStatus)

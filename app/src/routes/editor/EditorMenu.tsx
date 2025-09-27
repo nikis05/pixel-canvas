@@ -109,7 +109,9 @@ export const EditorMenu: FC = () => {
                   style={{ backgroundColor: pickedColor.toHex() }}
                   onClick={paletteModal.open}
                 >
-                  <span className="mix-blend-difference">{brushSize + 1}</span>
+                  <span className="text-white mix-blend-difference">
+                    {brushSize + 1}
+                  </span>
                 </div>
               );
             },
