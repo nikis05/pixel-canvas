@@ -3,7 +3,7 @@ import { saveAs } from "file-saver";
 async function download() {
   const codec = await import("image-codec");
   await codec.default();
-  const upscale = location.hash.substring(1) == "u";
+  const upscale = location.hash.substring(1, 2) == "u";
   const dna = location.hash.substring(2);
   const data = codec.decode_dna(dna);
   if (!data) throw new Error("Failed to decode DNA");
