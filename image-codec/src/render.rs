@@ -16,7 +16,9 @@ pub fn render(data: &[Vec<u8>], upscale: bool) -> Vec<u8> {
         })
         .repeat_n(scale)
         .collect_vec();
-    let image = RgbImage::from_vec(64, 64, pixels).unwrap();
+
+    let dimensions = u32::try_from(scale).unwrap() * 64;
+    let image = RgbImage::from_vec(dimensions, dimensions, pixels).unwrap();
 
     let mut bytes = vec![];
     image

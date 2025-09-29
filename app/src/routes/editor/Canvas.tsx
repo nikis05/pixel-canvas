@@ -1,9 +1,62 @@
-import React, { FC, useMemo } from "react";
+import React, {
+  FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Stage, Layer } from "react-konva";
 import { Pixel } from "./Pixel";
 import { useEditor } from "@/model/editor/useEditor";
 
 export const Canvas: FC = React.memo(() => {
+  const sceneWidth = 640;
+  const sceneHeight = 640;
+
+  const [stageSize, setStageSize] = useState<{
+    width: number;
+    height: number;
+    scale: number;
+  }>({
+    width: sceneWidth,
+    height: sceneHeight,
+    scale: 1,
+  });
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const updateSize = useCallback(() => {
+    if (!containerRef.current) return;
+
+    const containerWidth = containerRef.current.offsetWidth;
+
+    console.log(containerRef.current.offsetWidth);
+
+    const scale = containerWidth / sceneWidth;
+
+    setStageSize({
+      width: sceneWidth * scale,
+      height: sceneHeight * scale,
+      scale: scale,
+    });
+
+    console.log("updating size", {
+      width: sceneWidth * scale,
+      height: sceneHeight * scale,
+      scale: scale,
+    });
+  }, [containerRef, sceneWidth, sceneHeight, setStageSize]);
+
+  useEffect(() => {
+    updateSize();
+    window.addEventListener("resize", updateSize);
+
+    return () => {
+      window.removeEventListener("resize", updateSize);
+    };
+  }, [updateSize]);
+
   const { onDrawStart, onDrawEnd } = useEditor();
   const points = useMemo(
     () =>
@@ -14,19 +67,23 @@ export const Canvas: FC = React.memo(() => {
   );
 
   return (
-    <div className="aspect-square border border-black">
-      <Stage
-        height={640}
-        width={640}
-        onPointerDown={onDrawStart}
-        onPoinerUp={onDrawEnd}
-      >
-        <Layer>
-          {points.map((point) => (
-            <Pixel key={`${point.x}:${point.y}`} point={point} />
-          ))}
-        </Layer>
-      </Stage>
+    <div className="aspect-square h-[min(100%,_100vw)] min-w-0 min-h-0 box-border border-4 border-black">
+      <div ref={containerRef} className="w-full h-full overflow-hidden">
+        <Stage
+          height={stageSize.height}
+          width={stageSize.width}
+          scaleX={stageSize.scale}
+          scaleY={stageSize.scale}
+          onPointerDown={onDrawStart}
+          onPointerUp={onDrawEnd}
+        >
+          <Layer>
+            {points.map((point) => (
+              <Pixel key={`${point.x}:${point.y}`} point={point} />
+            ))}
+          </Layer>
+        </Stage>
+      </div>
     </div>
   );
 });
