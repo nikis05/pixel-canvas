@@ -11,14 +11,17 @@ pub async fn render(dna: Dna) -> Bytes {
         let rows = dna.pixels().chunks(64);
         let pixels = rows
             .into_iter()
-            .flat_map(|pixels| {
+            .map(|pixels| {
                 pixels
-                    .flat_map(|pixel| COLORS.get(&pixel).unwrap().0.iter().copied())
+                    .map(|pixel| COLORS.get(&pixel).unwrap().0.iter().copied())
                     .repeat_n(10)
+                    .flatten()
+                    .collect_vec()
             })
             .repeat_n(10)
+            .flatten()
             .collect_vec();
-        let image = RgbImage::from_vec(64, 64, pixels).unwrap();
+        let image = RgbImage::from_vec(640, 640, pixels).unwrap();
         let mut bytes = BytesMut::new();
         image
             .write_with_encoder(PngEncoder::new((&mut bytes).writer()))

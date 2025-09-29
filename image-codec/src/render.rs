@@ -8,13 +8,15 @@ pub fn render(data: &[Vec<u8>], upscale: bool) -> Vec<u8> {
     let scale = if upscale { 10 } else { 1 };
     let pixels = data
         .iter()
-        .flat_map(|pixels| {
-            pixels
-                .iter()
-                .flat_map(|pixel| COLORS.get(pixel).unwrap().0.iter().copied())
+        .map(|row| {
+            row.iter()
+                .map(|pixel| COLORS.get(pixel).unwrap().0.iter().copied())
                 .repeat_n(scale)
+                .flatten()
+                .collect_vec()
         })
         .repeat_n(scale)
+        .flatten()
         .collect_vec();
 
     let dimensions = u32::try_from(scale).unwrap() * 64;
