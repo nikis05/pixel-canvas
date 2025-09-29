@@ -7,7 +7,7 @@ export const Section: FC<
   return (
     <div className="flex">
       <div className="h-20 w-20 flex shrink-0 justify-center items-center">
-        <div className="h-8 w-8 rounded-sm bg-(--tgui--accent_text_color) flex justify-center items-center">
+        <div className="h-8 w-8 rounded-sm bg-(--tgui--accent_text_color) flex justify-center items-center text-white">
           <Icon />
         </div>
       </div>

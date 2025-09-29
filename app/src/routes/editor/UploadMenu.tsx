@@ -15,7 +15,6 @@ import { BsClipboard, BsFileArrowUp } from "react-icons/bs";
 import { useIsMounted } from "usehooks-ts";
 import { confirmReplace } from "./replaceAlert";
 import { toVoid } from "@/utils/toVoid";
-import { readTextFromClipboard } from "@telegram-apps/sdk-react";
 import { Link } from "@/components/Link";
 
 export const UploadMenu: FC = () => {
@@ -45,14 +44,6 @@ export const UploadMenu: FC = () => {
   );
 
   const [dna, setDna] = useState<string>("");
-
-  const onDnaPaste = useCallback(
-    toVoid(async () => {
-      const dna = (await readTextFromClipboard()) ?? "";
-      setDna(dna);
-    }),
-    [navigator, setDna]
-  );
 
   const onDnaChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -121,17 +112,8 @@ export const UploadMenu: FC = () => {
           title="Enter DNA"
           description="Enter image DNA string"
         >
-          <div className="relative -left-6">
-            <div className="flex items-center">
-              <Input
-                placeholder="Image DNA"
-                value={dna}
-                onChange={onDnaChange}
-              />
-              <Button size="s" onClick={onDnaPaste}>
-                Paste
-              </Button>
-            </div>
+          <div className="*:p-0! *:pt-4! *:pb-4!">
+            <Input placeholder="Image DNA" value={dna} onChange={onDnaChange} />
           </div>
           <div className="mt-4 flex items-center">
             <Button onClick={onLoadFromDna}>Load from DNA</Button>

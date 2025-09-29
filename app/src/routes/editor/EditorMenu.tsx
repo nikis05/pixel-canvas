@@ -41,7 +41,7 @@ export const EditorMenu: FC = () => {
 
   const [pickedColor, setPickedColor] = useState<Color>(() => Color.white());
 
-  const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
+  const [selectedTool, setSelectedTool] = useState<Tool | null>("pencil");
 
   const onToolSelected = useMemo(() => {
     const onSelected = (tool: Tool) => () => {
