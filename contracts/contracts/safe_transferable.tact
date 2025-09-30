@@ -20,7 +20,7 @@ trait SafeTransferable with Ownable {
     }
 }
 
-message TransferOwnership {
+message(0x76b47e33) TransferOwnership {
     to: Address?;
 }
 

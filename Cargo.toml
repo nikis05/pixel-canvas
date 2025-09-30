@@ -1,6 +1,12 @@
 [workspace]
 resolver = "3"
-members = ["image-codec", "render-server", "rust-colors"]
+members = [
+    "api-server",
+    "image-codec",
+    "render-server",
+    "rust-colors",
+    "viewer",
+]
 
 [workspace.dependencies]
 abort-on-drop = "0.2.2"
@@ -21,7 +27,7 @@ js-sys = "0.3.80"
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
 phf = { version = "0.12.1", features = ["macros"] }
-reqwest = { version = "0.12.23" }
+reqwest = { version = "0.12.23", features = ["json"] }
 rust-s3 = "0.35.1"
 sentry = { version = "0.41.0", features = ["anyhow"] }
 serde = { version = "1.0.219", features = ["derive"] }

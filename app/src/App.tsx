@@ -1,8 +1,4 @@
-import {
-  isMiniAppDark,
-  retrieveLaunchParams,
-  useSignal,
-} from "@telegram-apps/sdk-react";
+import { retrieveLaunchParams } from "@telegram-apps/sdk-react";
 import { AppRoot } from "@telegram-apps/telegram-ui";
 import { FC, useMemo } from "react";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
@@ -11,10 +7,9 @@ import { Nav } from "./components/Nav";
 
 export const App: FC = () => {
   const lp = useMemo(() => retrieveLaunchParams(), []);
-  const isDark = useSignal(isMiniAppDark);
   return (
     <AppRoot
-      appearance={isDark ? "dark" : "light"}
+      appearance="dark"
       platform={["macos", "ios"].includes(lp.tgWebAppPlatform) ? "ios" : "base"}
     >
       <HashRouter>

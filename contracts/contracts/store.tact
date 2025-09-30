@@ -103,7 +103,7 @@ contract Store with SafeTransferable, Resumable {
         let itemPrice: Int? = self.exclusivesOffered.get(itemIndex);
         require(itemPrice != null, "No such item");
         require(context().value == itemPrice, "Invalid message value");
-        self.exclusivesOffered.del(itemIndex);
+        let _ =self.exclusivesOffered.del(itemIndex);
         message(MessageParameters {
             to: contractAddress(initOf Item(self.collection, itemIndex)),
             value: 0,
@@ -186,7 +186,7 @@ contract Store with SafeTransferable, Resumable {
     }
 
     fun closePurchase(id: Int) {
-        self.pendingPurchases.del(id);
+        let _ = self.pendingPurchases.del(id);
         self.numPendingPurchases -= 1;
     }
 
@@ -213,11 +213,11 @@ message(0xf0f7c18a) Bake {
 
 message(0x435e0ccd) Refund {}
 
-message PurchaseExclusive {
+message(0x6480907e) PurchaseExclusive {
     itemIndex: Int as uint32;
 }
 
-message RemoveExclusive {
+message(0xed0dde35) RemoveExclusive {
     itemIndex: Int as uint32;
 }
 
@@ -225,7 +225,7 @@ message(0x2365d020) Withdraw {}
 
 message(0xb722c4ae) Terminate {}
 
-message SetItemPrice { newPrice: Int }
+message(0x2a9d0b18) SetItemPrice { newPrice: Int }
 
 struct ForwardPayloadCustom {
     price: Int;

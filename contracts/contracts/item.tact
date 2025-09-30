@@ -1,5 +1,6 @@
 import "./issuable.tact";
 import "./destroy.tact";
+import "./claim";
 
 contract Item with Issuable {
     collectionAddress: Address;
@@ -20,7 +21,16 @@ contract Item with Issuable {
     receive() {
         if (!self.initialized) {
             destroy(sender());
+            return;
         }
+
+        require(context().value >= ton("0.05"), "Insufficient message value");
+        
+        message(MessageParameters {
+            to: contractAddress(initOf Claim(self.collectionAddress, self.spec!!.dna.hash())),
+            bounce: false,
+            value: ton("0.01"),
+        });
     }
 
     receive(msg: Transfer) {
@@ -102,7 +112,7 @@ contract Item with Issuable {
             destroy(sender);
             return;
         }
-        send(SendParameters {
+        message(MessageParameters {
             to: sender,
             value: 0,
             mode: SendRemainingValue,
@@ -138,6 +148,10 @@ contract Item with Issuable {
         return self.spec != null ? self.spec!!.dna : null;
     }
 
+    get fun dna_hash(): Int? {
+        return self.spec != null ? self.spec!!.dna.hash() : null;
+    }
+
     inline fun artistFingerprint(): Int {
         return sha256(
             beginString()
@@ -161,12 +175,12 @@ message(0x5fcc3d14) Transfer {
     forwardPayload: Slice as remaining;
 }
 
-message ReportItemResale {
+message(0x5f76b06e) ReportItemResale {
     id: Int as uint224;
     resaleValue: Int;
 }
 
-message ReportResaleCallback {
+message(0x85f8e73b) ReportResaleCallback {
     id: Int as uint224;
 }
 

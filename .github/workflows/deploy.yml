@@ -28,19 +28,34 @@ jobs:
             Cargo.toml
             Cargo.lock
             render-server
+            api-server
             rust-colors
             palette.json
             deploy
-      - name: Build and push container
+      - name: Build and push render server
         uses: docker/build-push-action@v6
         with:
-          file: ./deploy/render-server.Dockerfile
-          build-args: APP_VERSION=${{ github.sha }}
+          file: ./deploy/rust-server.Dockerfile
+          build-args: |
+            PACKAGE=render-server
+            APP_VERSION=${{ github.sha }}
           platforms: linux/amd64
           push: true
           tags: ${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:latest
           cache-from: type=registry,ref=${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache
           cache-to: type=registry,ref=${{ vars.DOCKERHUB_REGISTRY }}/canvas-render-server:buildcache,mode=max
+      - name: Build and push api server
+        uses: docker/build-push-action@v6
+        with:
+          file: ./deploy/rust-server.Dockerfile
+          build-args: |
+            PACKAGE=api-server
+            APP_VERSION=${{ github.sha }}
+          platforms: linux/amd64
+          push: true
+          tags: ${{ vars.DOCKERHUB_REGISTRY }}/canvas-api-server:latest
+          cache-from: type=registry,ref=${{ vars.DOCKERHUB_REGISTRY }}/canvas-api-server:buildcache
+          cache-to: type=registry,ref=${{ vars.DOCKERHUB_REGISTRY }}/canvas-api-server:buildcache,mode=max
   wasm:
     name: WASM
     runs-on: ubuntu-latest
@@ -54,6 +69,7 @@ jobs:
             render-server
             rust-colors
             image-codec
+            viewer
             palette.json
       - name: Determine cache key
         id: cache-key

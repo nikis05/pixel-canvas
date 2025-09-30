@@ -203,6 +203,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0674a1ddeecb70197781e945de4b3b8ffb61fa939a5597bcf48503737663100"
 
 [[package]]
+name = "api-server"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "either",
+ "envy",
+ "sentry",
+ "serde",
+ "tokio",
+ "tonlib-core",
+ "viewer",
+]
+
+[[package]]
 name = "arbitrary"
 version = "1.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2381,7 +2396,6 @@ checksum = "caf4aa5b0f434c91fe5c7f1ecb6a5ece2130b02ad2a590589dda5146df959001"
 name = "render-server"
 version = "0.1.0"
 dependencies = [
- "abort-on-drop",
  "anyhow",
  "axum",
  "bitvec",
@@ -2389,20 +2403,18 @@ dependencies = [
  "either",
  "envy",
  "futures",
- "futures-retry",
  "image",
  "itertools 0.14.0",
  "num-bigint",
  "phf",
- "reqwest",
  "rust-colors",
  "rust-s3",
  "sentry",
  "serde",
- "serde_json",
  "tokio",
  "tokio-rayon",
  "tonlib-core",
+ "viewer",
 ]
 
 [[package]]
@@ -3544,6 +3556,23 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+
+[[package]]
+name = "viewer"
+version = "0.1.0"
+dependencies = [
+ "abort-on-drop",
+ "anyhow",
+ "bytes",
+ "either",
+ "futures",
+ "futures-retry",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tonlib-core",
+]
 
 [[package]]
 name = "want"

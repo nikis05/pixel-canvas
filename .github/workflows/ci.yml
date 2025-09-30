@@ -17,8 +17,10 @@ jobs:
             Cargo.toml
             Cargo.lock
             render-server
+            api-server
             rust-colors
             image-codec
+            viewer
             palette.json
       - name: Determine cache key
         id: cache-key
@@ -117,8 +119,10 @@ jobs:
             Cargo.toml
             Cargo.lock
             render-server
+            api-server
             rust-colors
             image-codec
+            viewer
             palette.json
       - name: Cache
         uses: actions/cache@v4

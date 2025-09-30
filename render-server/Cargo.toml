@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+viewer = { path = "../viewer" }
 rust-colors = { path = "../rust-colors" }
-abort-on-drop.workspace = true
 anyhow.workspace = true
 axum.workspace = true
 bitvec.workspace = true
@@ -13,16 +13,13 @@ bytes.workspace = true
 either.workspace = true
 envy.workspace = true
 futures.workspace = true
-futures-retry.workspace = true
 image.workspace = true
 itertools.workspace = true
 num-bigint.workspace = true
 phf.workspace = true
-reqwest.workspace = true
 rust-s3.workspace = true
 sentry.workspace = true
 serde.workspace = true
-serde_json.workspace = true
 tokio.workspace = true
 tokio-rayon.workspace = true
 tonlib-core.workspace = true
