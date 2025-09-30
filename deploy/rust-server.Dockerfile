@@ -30,7 +30,7 @@ FROM debian:bullseye-slim AS runtime
 RUN apt update
 RUN apt install -y curl
 ARG PACKAGE
-COPY --from=builder /app/target/release/${PACKAGE}} /usr/local/bin
+COPY --from=builder /app/target/release/${PACKAGE} /usr/local/bin
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD exec curl --fail http://localhost:$PORT/health
 ENV RUST_BACKTRACE=1
