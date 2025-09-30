@@ -7,6 +7,7 @@ COPY ./Cargo.toml .
 COPY ./Cargo.lock .
 COPY ./rust-colors ./rust-colors
 COPY ./image-codec ./image-codec
+COPY ./viewer ./viewer
 COPY ./api-server ./api-server
 COPY ./render-server ./render-server
 RUN cargo chef prepare --recipe-path recipe.json
@@ -19,6 +20,7 @@ COPY ./Cargo.toml .
 COPY ./Cargo.lock .
 COPY ./rust-colors ./rust-colors
 COPY ./image-codec ./image-codec
+COPY ./viewer ./viewer
 COPY ./api-server ./api-server
 COPY ./render-server ./render-server
 ARG PACKAGE

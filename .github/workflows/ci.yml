@@ -20,6 +20,7 @@ jobs:
             api-server
             rust-colors
             image-codec
+            viewer
             palette.json
       - name: Determine cache key
         id: cache-key
@@ -121,6 +122,7 @@ jobs:
             api-server
             rust-colors
             image-codec
+            viewer
             palette.json
       - name: Cache
         uses: actions/cache@v4

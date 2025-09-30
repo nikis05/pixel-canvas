@@ -69,6 +69,7 @@ jobs:
             render-server
             rust-colors
             image-codec
+            viewer
             palette.json
       - name: Determine cache key
         id: cache-key

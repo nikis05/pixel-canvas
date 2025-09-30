@@ -58,6 +58,7 @@ jobs:
             api-server
             rust-colors
             image-codec
+            viewer
             palette.json
       - name: Lookup cache
         uses: actions/cache/restore@v4
