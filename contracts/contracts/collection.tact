@@ -231,31 +231,31 @@ contract Collection with SafeTransferable, Resumable {
     }
 }
 
-message SetMinter { minterAddress: Address? }
+message(0x6f421bc6) SetMinter { minterAddress: Address? }
 
-message SetResaleReporter { resaleReporterAddress: Address? }
+message(0x253e7e97) SetResaleReporter { resaleReporterAddress: Address? }
 
-message SetDisplaySettings {
+message(0x9f6eefc2) SetDisplaySettings {
     imageUrl: String;
     collectionContent: Cell;
 }
 
-message Mint {
+message(0xed880a53) Mint {
     id: Int as uint224;
     recipient: Address;
     itemCreateData: ItemCreateData;
     forwardPayloadCustom: Cell;
 }
 
-message SuccessfulMinting {
+message(0xc31853c0) SuccessfulMinting {
     id: Int as uint224;
 }
 
-message FailedMinting {
+message(0xdbe55a98) FailedMinting {
     id: Int as uint224;
 }
 
-message ReportResale {
+message(0xb35c07b) ReportResale {
     id: Int as uint224;
     itemIndex: Int as uint32;
     resaleValue: Int;

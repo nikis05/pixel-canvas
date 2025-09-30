@@ -1,0 +1,15 @@
+[package]
+name = "api-server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+viewer = { path = "../viewer" }
+anyhow.workspace = true
+axum.workspace = true
+either.workspace = true
+envy.workspace = true
+sentry.workspace = true
+serde.workspace = true
+tokio.workspace = true
+tonlib-core.workspace = true

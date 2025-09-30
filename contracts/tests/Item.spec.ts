@@ -1,16 +1,16 @@
 import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
-import { BitString, Builder, Cell, SendMode, toNano } from '@ton/core';
+import { BitString, Builder, Cell, openContract, SendMode, toNano } from '@ton/core';
 import { Item, storeItemCreateData } from '../build/Item/Item_Item';
 import '@ton/test-utils';
 import {
     storeExcesses,
-    storeItemSpec,
     storeOwnershipAssigned,
     storeReportStaticData,
     storeIndividualContent,
     loadIndividualContent,
 } from '../build/Collection/Collection_Collection';
 import { getTransactionFees, getTransactionValue, hashToInt } from './utils';
+import { Claim } from '../build/Claim/Claim_Claim';
 
 describe('Item', () => {
     let blockchain: Blockchain;
@@ -300,6 +300,96 @@ describe('Item', () => {
                 to: item.address,
                 deploy: true,
                 success: true,
+            });
+        });
+    });
+
+    describe('empty receiver', () => {
+        it('sends coins to claim address', async () => {
+            await item.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.2'),
+                },
+                {
+                    $$type: 'Transfer',
+                    queryId: BigInt(123),
+                    newOwner: owner.address,
+                    responseDestination: null,
+                    customPayload,
+                    forwardAmount: toNano(0),
+                    forwardPayload: Cell.EMPTY.asSlice(),
+                },
+            );
+
+            const dnaHash = await item.getDnaHash();
+
+            const claim = blockchain.openContract(await Claim.fromInit(deployer.address, dnaHash!!));
+
+            await claim.send(
+                deployer.getSender(),
+                { value: toNano('0.1') },
+                {
+                    $$type: 'ClaimMessage',
+                    id: BigInt(123),
+                    successCallbackAddress: deployer.address,
+                    successCallbackData: Cell.EMPTY,
+                },
+            );
+
+            const sendResult = await item.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.05'),
+                },
+                null,
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: deployer.address,
+                to: item.address,
+                op: undefined,
+                success: true,
+            });
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: item.address,
+                to: claim.address,
+                success: true,
+            });
+        });
+
+        it('throws if insufficient message value', async () => {
+            await item.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.2'),
+                },
+                {
+                    $$type: 'Transfer',
+                    queryId: BigInt(123),
+                    newOwner: owner.address,
+                    responseDestination: null,
+                    customPayload,
+                    forwardAmount: toNano(0),
+                    forwardPayload: Cell.EMPTY.asSlice(),
+                },
+            );
+
+            const sendResult = await item.send(
+                deployer.getSender(),
+                {
+                    value: toNano('0.01'),
+                },
+                null,
+            );
+
+            expect(sendResult.transactions).toHaveTransaction({
+                from: deployer.address,
+                to: item.address,
+                op: undefined,
+                success: false,
+                exitCode: 38086,
             });
         });
     });

@@ -39,13 +39,13 @@ contract Claim with Issuable {
     }
 }
 
-message ClaimMessage {
+message(0x5e6c4b4c) ClaimMessage {
     id: Int as uint224;
     successCallbackAddress: Address;
     successCallbackData: Cell;
 }
 
-message ClaimSuccess {
+message(0x6e0b880c) ClaimSuccess {
     subject: Int;
     data: Cell;
 }

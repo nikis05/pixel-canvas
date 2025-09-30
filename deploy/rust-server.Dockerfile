@@ -7,6 +7,7 @@ COPY ./Cargo.toml .
 COPY ./Cargo.lock .
 COPY ./rust-colors ./rust-colors
 COPY ./image-codec ./image-codec
+COPY ./api-server ./api-server
 COPY ./render-server ./render-server
 RUN cargo chef prepare --recipe-path recipe.json
 
@@ -18,16 +19,19 @@ COPY ./Cargo.toml .
 COPY ./Cargo.lock .
 COPY ./rust-colors ./rust-colors
 COPY ./image-codec ./image-codec
+COPY ./api-server ./api-server
 COPY ./render-server ./render-server
-RUN cargo build --frozen --release --bin render-server
+ARG PACKAGE
+RUN cargo build --frozen --release --bin ${PACKAGE}
 
 FROM debian:bullseye-slim AS runtime
 RUN apt update
 RUN apt install -y curl
-COPY --from=builder /app/target/release/render-server /usr/local/bin
+ARG PACKAGE
+COPY --from=builder /app/target/release/${PACKAGE}} /usr/local/bin
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD exec curl --fail http://localhost:$PORT/health
 ENV RUST_BACKTRACE=1
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
-CMD ["/usr/local/bin/render-server"]
+CMD ["/usr/local/bin/${PACKAGE}"]

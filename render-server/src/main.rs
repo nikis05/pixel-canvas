@@ -1,11 +1,6 @@
 #![warn(clippy::pedantic, clippy::todo)]
 #![forbid(unused_must_use)]
-use crate::{
-    dna::Dna,
-    item_address::item_address,
-    storage::Storage,
-    viewer::{Viewer, ViewerError},
-};
+use crate::{dna::Dna, item_address::item_address, storage::Storage};
 use axum::{
     Router,
     body::Body,
@@ -17,12 +12,12 @@ use axum::{
 use either::Either;
 use futures::TryStreamExt;
 use serde::Deserialize;
+use viewer::{Viewer, ViewerError};
 
 mod dna;
 mod item_address;
 mod render;
 mod storage;
-mod viewer;
 
 #[derive(Deserialize)]
 struct Env {
@@ -86,6 +81,7 @@ async fn main() {
                     let raw_dna = match viewer.get_dna(item_address).await {
                         Ok(raw_dna) => raw_dna,
                         Err(Either::Left(ViewerError::OverCapacity)) => {
+                            eprintln!("Too many requests");
                             return (StatusCode::TOO_MANY_REQUESTS, "Too Many Requests")
                                 .into_response();
                         }
