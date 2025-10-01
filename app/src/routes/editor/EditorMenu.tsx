@@ -17,6 +17,8 @@ import { UploadMenu } from "./UploadMenu";
 import { DownloadMenu } from "./DownloadMenu";
 import { confirmReplace } from "./replaceAlert";
 import { toVoid } from "@/utils/toVoid";
+import tonIcon from "./ton_symbol.svg";
+import { useBakeButton } from "./useBakeButton";
 
 type Tool = "pencil" | "eraser";
 
@@ -73,6 +75,40 @@ export const EditorMenu: FC = () => {
     [confirmReplace, isEmpty, clear]
   );
 
+  const renderPaletteIcon = useCallback(() => {
+    const className = classNames(
+      "h-4",
+      "w-4",
+      "box-border",
+      "rounded-sm",
+      "border-1",
+      "flex",
+      "justify-center",
+      "items-center",
+      "text-[8px]",
+      {
+        "border-(--tgui--link_color)": paletteModal.isOpen,
+        "border-(--tgiu--text_color)": !paletteModal.isOpen,
+        "group-hover:border-(--tgui--link_color)": !paletteModal.isOpen,
+      }
+    );
+    return (
+      <div
+        className={className}
+        style={{ backgroundColor: pickedColor.toHex() }}
+      >
+        <span className="text-white mix-blend-difference">{brushSize + 1}</span>
+      </div>
+    );
+  }, [paletteModal.isOpen, pickedColor, brushSize]);
+
+  const renderTonIcon = useCallback(
+    () => <img className="h-4 w-4" src={tonIcon} />,
+    []
+  );
+
+  const bakeButton = useBakeButton();
+
   return (
     <>
       <ToolMenu
@@ -85,38 +121,9 @@ export const EditorMenu: FC = () => {
           },
           {
             key: "palette",
-            renderIcon: () => {
-              const className = classNames(
-                "h-4",
-                "w-4",
-                "box-border",
-                "rounded-sm",
-                "border-1",
-                "flex",
-                "justify-center",
-                "items-center",
-                "text-[8px]",
-                {
-                  "border-(--tgui--link_color)": paletteModal.isOpen,
-                  "border-(--tgiu--text_color)": !paletteModal.isOpen,
-                  "group-hover:border-(--tgui--link_color)":
-                    !paletteModal.isOpen,
-                }
-              );
-              return (
-                <div
-                  className={className}
-                  style={{ backgroundColor: pickedColor.toHex() }}
-                  onClick={paletteModal.open}
-                >
-                  <span className="text-white mix-blend-difference">
-                    {brushSize + 1}
-                  </span>
-                </div>
-              );
-            },
+            renderIcon: renderPaletteIcon,
             active: false,
-            onClick: () => {},
+            onClick: paletteModal.open,
           },
           {
             key: "eraser",
@@ -140,6 +147,14 @@ export const EditorMenu: FC = () => {
             onClick: downloadModal.open,
           },
           { key: "clear", Icon: BsTrash, active: false, onClick: onClear },
+          {
+            key: "bake",
+            renderIcon: renderTonIcon,
+            text: "Make NFT",
+            active: bakeButton.isActive,
+            primary: true,
+            onClick: bakeButton.onClick,
+          },
         ]}
       />
       <Modal handle={paletteModal} srText="Select brush size and color">

@@ -1,12 +1,6 @@
 [workspace]
 resolver = "3"
-members = [
-    "api-server",
-    "image-codec",
-    "render-server",
-    "rust-colors",
-    "viewer",
-]
+members = ["api-server", "wasm", "render-server", "rust-colors", "viewer"]
 
 [workspace.dependencies]
 abort-on-drop = "0.2.2"

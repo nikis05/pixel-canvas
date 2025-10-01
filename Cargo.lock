@@ -1457,22 +1457,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "image-codec"
-version = "0.1.1"
-dependencies = [
- "base64",
- "bitvec",
- "bytes",
- "image",
- "itertools 0.14.0",
- "js-sys",
- "num-traits",
- "phf",
- "rust-colors",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "image-webp"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3605,6 +3589,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03fa2761397e5bd52002cd7e73110c71af2109aca4e521a9f40473fe685b0a24"
 dependencies = [
  "wit-bindgen",
+]
+
+[[package]]
+name = "wasm"
+version = "0.1.1"
+dependencies = [
+ "base64",
+ "bitvec",
+ "bytes",
+ "image",
+ "itertools 0.14.0",
+ "js-sys",
+ "num-traits",
+ "phf",
+ "rust-colors",
+ "tonlib-core",
+ "wasm-bindgen",
 ]
 
 [[package]]

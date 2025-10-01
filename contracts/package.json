@@ -9,8 +9,7 @@
         "release": "blueprint pack && npm publish --access public"
     },
     "dependencies": {
-        "@ton/core": "~0",
-        "image-codec": "^0.1.0"
+        "@ton/core": "~0"
     },
     "devDependencies": {
         "@tact-lang/compiler": ">=1.6.13 <2.0.0",

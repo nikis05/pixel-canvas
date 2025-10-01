@@ -1,5 +1,5 @@
 [package]
-name = "image-codec"
+name = "wasm"
 version = "0.1.1"
 edition = "2024"
 
@@ -16,4 +16,5 @@ itertools.workspace = true
 js-sys.workspace = true
 num-traits.workspace = true
 phf.workspace = true
+tonlib-core.workspace = true
 wasm-bindgen.workspace = true

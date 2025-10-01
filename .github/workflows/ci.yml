@@ -19,17 +19,17 @@ jobs:
             render-server
             api-server
             rust-colors
-            image-codec
+            wasm
             viewer
             palette.json
       - name: Determine cache key
         id: cache-key
-        run: echo "KEY=${{ hashFiles('image-codec/**') }}" >> "$GITHUB_OUTPUT"
+        run: echo "KEY=${{ hashFiles('wasm/**') }}" >> "$GITHUB_OUTPUT"
       - name: Lookup WASM
         uses: actions/cache/restore@v4
         id: lookup-wasm
         with:
-          path: image-codec/pkg/
+          path: wasm/pkg/
           key: ${{ runner.os }}-wasm-${{ steps.cache-key.outputs.key }}
           lookup-only: true
       - name: Setup Rust
@@ -57,12 +57,12 @@ jobs:
           crate: wasm-pack
       - name: Build WASM
         if: steps.lookup-wasm.outputs.cache-hit != 'true'
-        run: cd image-codec && wasm-pack build --target web
+        run: cd wasm && wasm-pack build --target web
       - name: Upload WASM
         if: steps.lookup-wasm.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: image-codec/pkg/
+          path: wasm/pkg/
           key: ${{ runner.os }}-wasm-${{ steps.cache-key.outputs.key }}
   js:
     name: JS
@@ -81,7 +81,7 @@ jobs:
             package-lock.json
             app
             contracts
-            image-codec
+            wasm
       - name: Get npm cache directory
         id: npm-cache-dir
         shell: bash
@@ -95,8 +95,8 @@ jobs:
       - name: Download WASM
         uses: actions/cache/restore@v4
         with:
-          path: image-codec/pkg/
-          key: ${{ runner.os }}-wasm-${{ hashFiles('image-codec/**') }}
+          path: wasm/pkg/
+          key: ${{ runner.os }}-wasm-${{ hashFiles('wasm/**') }}
       - name: NPM install
         run: npm ci
       - name: Test contracts
@@ -121,7 +121,7 @@ jobs:
             render-server
             api-server
             rust-colors
-            image-codec
+            wasm
             viewer
             palette.json
       - name: Cache

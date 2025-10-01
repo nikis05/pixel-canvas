@@ -57,7 +57,7 @@ jobs:
             render-server
             api-server
             rust-colors
-            image-codec
+            wasm
             viewer
             palette.json
       - name: Lookup cache

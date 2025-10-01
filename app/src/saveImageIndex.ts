@@ -1,7 +1,7 @@
 import { saveAs } from "file-saver";
 
 async function download() {
-  const codec = await import("image-codec");
+  const codec = await import("wasm");
   await codec.default();
   const upscale = location.hash.substring(1, 2) == "u";
   const dna = location.hash.substring(2);

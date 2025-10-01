@@ -107,7 +107,7 @@ async fn main() {
         .await
         .unwrap();
 
-    println!("Render server is started, listening to requests...");
+    println!("API server is started, listening to requests...");
 
     axum::serve(listener, app).await.unwrap();
 

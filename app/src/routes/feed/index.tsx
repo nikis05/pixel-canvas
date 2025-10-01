@@ -1,5 +1,6 @@
+import { Page } from "@/components/Page";
 import { FC } from "react";
 
 export const Feed: FC = () => {
-  return <div>Feed</div>;
+  return <Page back={false}>Feed</Page>;
 };

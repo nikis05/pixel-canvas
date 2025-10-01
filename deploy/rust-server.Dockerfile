@@ -6,7 +6,7 @@ FROM chef AS planner
 COPY ./Cargo.toml .
 COPY ./Cargo.lock .
 COPY ./rust-colors ./rust-colors
-COPY ./image-codec ./image-codec
+COPY ./wasm ./wasm
 COPY ./viewer ./viewer
 COPY ./api-server ./api-server
 COPY ./render-server ./render-server
@@ -19,7 +19,7 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY ./Cargo.toml .
 COPY ./Cargo.lock .
 COPY ./rust-colors ./rust-colors
-COPY ./image-codec ./image-codec
+COPY ./wasm ./wasm
 COPY ./viewer ./viewer
 COPY ./api-server ./api-server
 COPY ./render-server ./render-server

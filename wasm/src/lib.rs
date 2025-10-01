@@ -9,6 +9,7 @@ use wasm_bindgen::{JsValue, prelude::wasm_bindgen};
 use crate::dna::Dna;
 
 mod dna;
+mod pack;
 mod parse;
 mod render;
 
@@ -44,17 +45,7 @@ pub fn render_image(
     #[wasm_bindgen(unchecked_param_type = "number[][]")] data: Array,
     upscale: bool,
 ) -> Uint8Array {
-    let data = data
-        .to_vec()
-        .into_iter()
-        .map(|inner| {
-            Array::from(&inner)
-                .to_vec()
-                .into_iter()
-                .map(|value| value.as_f64().unwrap().to_u8().unwrap())
-                .collect_vec()
-        })
-        .collect_vec();
+    let data = data_from_js(&data);
     let bytes = render::render(&data, upscale);
 
     Uint8Array::new_from_slice(&bytes)
@@ -79,8 +70,33 @@ pub fn decode_dna(dna: String) -> Option<Array> {
     clippy::missing_panics_doc
 )]
 pub fn encode_dna(#[wasm_bindgen(unchecked_param_type = "number[][]")] data: Array) -> String {
-    let data = data
-        .to_vec()
+    let data = data_from_js(&data);
+
+    Dna::from_data(data).to_base64()
+}
+
+#[wasm_bindgen]
+#[allow(clippy::must_use_candidate, clippy::needless_pass_by_value)]
+pub fn pack_bake(
+    title: String,
+    artist: String,
+    #[wasm_bindgen(unchecked_param_type = "number[][]")] data: Array,
+) -> String {
+    let data = data_from_js(&data);
+
+    let dna = Dna::from_data(data);
+
+    pack::pack_bake(&title, &artist, &dna)
+}
+
+#[wasm_bindgen]
+#[allow(clippy::must_use_candidate)]
+pub fn pack_purchase_exclusive(item_index: u32) -> String {
+    pack::pack_purchase_exclusive(item_index)
+}
+
+fn data_from_js(js: &Array) -> Vec<Vec<u8>> {
+    js.to_vec()
         .into_iter()
         .map(|row| {
             Array::from(&row)
@@ -89,7 +105,5 @@ pub fn encode_dna(#[wasm_bindgen(unchecked_param_type = "number[][]")] data: Arr
                 .map(|value| value.as_f64().unwrap().to_u8().unwrap())
                 .collect_vec()
         })
-        .collect_vec();
-
-    Dna::from_data(data).to_base64()
+        .collect_vec()
 }
