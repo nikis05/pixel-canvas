@@ -1,8 +1,13 @@
-use axum::{Json, Router, extract, http::StatusCode, response::IntoResponse, routing};
+use axum::{
+    Json, Router, extract,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    routing,
+};
 use either::Either;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tonlib_core::TonAddress;
-use viewer::{Viewer, ViewerError};
+use viewer::{Viewer, ViewerError, ViewerResult};
 
 #[derive(Deserialize)]
 struct Env {
@@ -67,38 +72,30 @@ async fn main() {
                         .get_items(collection_address, owner_address, Some(params.page))
                         .await;
 
-                    match result {
-                        Ok(items) => Json(items).into_response(),
-                        Err(Either::Left(ViewerError::OverCapacity)) => {
-                            eprintln!("Too many requests");
-                            (StatusCode::TOO_MANY_REQUESTS, "Too Many Requests").into_response()
-                        }
-                        Err(Either::Right(err)) => {
-                            capture_error(&err);
-                            (StatusCode::INTERNAL_SERVER_ERROR, "Internal Error").into_response()
-                        }
-                    }
+                    handle_viewer_result(result)
                 }
             }),
         )
         .route(
             "/api/exclusives",
-            routing::get(async move || {
-                let result = viewer
-                    .get_exclusives(collection_address, store_address)
-                    .await;
+            routing::get({
+                let viewer = viewer.clone();
+                let store_address = store_address.clone();
+                async move || {
+                    let result = viewer
+                        .get_exclusives(collection_address, store_address)
+                        .await;
 
-                match result {
-                    Ok(items) => Json(items).into_response(),
-                    Err(Either::Left(ViewerError::OverCapacity)) => {
-                        eprintln!("Too many requests");
-                        (StatusCode::TOO_MANY_REQUESTS, "Too Many Requests").into_response()
-                    }
-                    Err(Either::Right(err)) => {
-                        capture_error(&err);
-                        (StatusCode::INTERNAL_SERVER_ERROR, "Internal Error").into_response()
-                    }
+                    handle_viewer_result(result)
                 }
+            }),
+        )
+        .route(
+            "/api/item_price",
+            routing::get(async move || {
+                let result = viewer.get_item_price(store_address).await;
+
+                handle_viewer_result(result)
             }),
         )
         .route("/health", routing::get(async || "ok"));
@@ -112,4 +109,18 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 
     drop(sentry);
+}
+
+fn handle_viewer_result<T: Serialize>(result: ViewerResult<T>) -> Response {
+    match result {
+        Ok(data) => Json(data).into_response(),
+        Err(Either::Left(ViewerError::OverCapacity)) => {
+            eprintln!("Too many requests");
+            (StatusCode::TOO_MANY_REQUESTS, "Too Many Requests").into_response()
+        }
+        Err(Either::Right(err)) => {
+            capture_error(&err);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Internal Error").into_response()
+        }
+    }
 }
