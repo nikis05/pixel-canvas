@@ -1,15 +1,9 @@
 import { toVoid } from "@/utils/toVoid";
-import {
-  useTonConnectModal,
-  useTonConnectUI,
-  useTonWallet,
-} from "@tonconnect/ui-react";
+import { useTonConnectModal, useTonWallet } from "@tonconnect/ui-react";
 import { useCallback, useMemo } from "react";
 
 export function useBakeButton() {
   const wallet = useTonWallet();
-
-  const [tonUi] = useTonConnectUI();
 
   const { state: tonConnectModalState, open: openTonConnectModal } =
     useTonConnectModal();
