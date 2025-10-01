@@ -67,6 +67,7 @@ jobs:
             Cargo.toml
             Cargo.lock
             render-server
+            api-server
             rust-colors
             wasm
             viewer
