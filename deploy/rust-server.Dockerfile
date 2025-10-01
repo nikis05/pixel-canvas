@@ -36,4 +36,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 ENV RUST_BACKTRACE=1
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
-CMD ["/usr/local/bin/${PACKAGE}"]
+ENV DOCKER__TARGET=$PACKAGE
+CMD ["sh", "-c", "/usr/local/bin/$DOCKER__TARGET"]
