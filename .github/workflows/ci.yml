@@ -99,7 +99,15 @@ jobs:
           key: ${{ runner.os }}-wasm-${{ hashFiles('wasm/**') }}
       - name: NPM install
         run: npm ci
+      - name: Check changes
+        uses: dorny/paths-filter@v3
+        id: contract-changes
+        with:
+          filters: |
+            src:
+              - 'contracts/**'
       - name: Test contracts
+        if: steps.contract-changes.outputs.src == 'true'
         run: cd contracts && npx blueprint build --all && npm test
       - name: Lint app
         run: cd app && npm run lint
