@@ -147,5 +147,3 @@ jobs:
         run: cargo clippy --locked
       - name: Rustfmt
         run: cargo fmt --check
-
-        
