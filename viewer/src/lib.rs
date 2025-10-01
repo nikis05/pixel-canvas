@@ -161,8 +161,7 @@ impl Viewer {
 
                 let err_response = || anyhow::anyhow!("Invalid response from viewer");
 
-                let payload =
-                    serde_json::from_value::<Payload>(output).map_err(anyhow::Error::new)?;
+                let payload = serde_json::from_value::<Payload>(output)?;
                 if let Some(stack_item) = payload.stack.and_then(|mut stack| stack.pop()) {
                     if stack_item.type_ == "cell" {
                         Ok(stack_item.value)
@@ -235,8 +234,7 @@ impl Viewer {
                     description: String,
                 }
 
-                let payload =
-                    serde_json::from_value::<Payload>(output).map_err(anyhow::Error::new)?;
+                let payload = serde_json::from_value::<Payload>(output)?;
 
                 let items = payload
                     .nft_items
@@ -301,8 +299,7 @@ impl Viewer {
 
                 let err_response = || anyhow::anyhow!("invalid response from viewer");
 
-                let payload =
-                    serde_json::from_value::<Payload>(output).map_err(anyhow::Error::new)?;
+                let payload = serde_json::from_value::<Payload>(output)?;
 
                 let boc = if let Some(stack_item) = payload.stack.and_then(|mut stack| stack.pop())
                 {
@@ -361,6 +358,56 @@ impl Viewer {
             .collect();
 
         Ok(exclusives_with_data)
+    }
+
+    pub async fn get_item_price(&self, store_address: TonAddress) -> ViewerResult<u32> {
+        struct GetItemPrice {
+            store_address: TonAddress,
+        }
+
+        impl Task for GetItemPrice {
+            type Output = u32;
+
+            fn job_payload(&self) -> ((reqwest::Method, &'static str), serde_json::Value) {
+                let store_address = self.store_address.to_string();
+                let params = serde_json::json!({
+                    "address": store_address,
+                    "method": "item_price",
+                    "stack": []
+                });
+                ((reqwest::Method::POST, "runGetMethod"), params)
+            }
+
+            fn parse_output(output: serde_json::Value) -> Result<Self::Output, anyhow::Error> {
+                #[derive(Deserialize)]
+                struct Payload {
+                    stack: Option<Vec<StackElem>>,
+                }
+
+                #[derive(Deserialize)]
+                struct StackElem {
+                    #[serde(rename = "type")]
+                    type_: String,
+                    value: String,
+                }
+
+                let err_response = || anyhow::anyhow!("Invalid response from viewer");
+
+                let payload = serde_json::from_value::<Payload>(output)?;
+
+                if let Some(stack_item) = payload.stack.and_then(|mut stack| stack.pop()) {
+                    if stack_item.type_ == "num" {
+                        u32::from_str_radix(&stack_item.value[2..], 16).map_err(|_| err_response())
+                    } else {
+                        Err(err_response())
+                    }
+                } else {
+                    Err(err_response())
+                }
+            }
+        }
+
+        self.run_task(GetItemPrice { store_address }).await
     }
 
     async fn run_task<T: Task>(&self, task: T) -> ViewerResult<T::Output> {
