@@ -1,7 +1,7 @@
 import { Observable, Subject } from "rxjs";
 import * as z from "zod";
 import colors from "@root/palette.json";
-import type { ParseImageResponse } from "image-codec";
+import type { ParseImageResponse } from "wasm";
 
 export type Point = { x: number; y: number };
 
@@ -268,8 +268,8 @@ export class Editor {
     }
   }
 
-  private async getCodec(): Promise<typeof import("image-codec")> {
-    const codec = await import("image-codec");
+  private async getCodec(): Promise<typeof import("wasm")> {
+    const codec = await import("wasm");
     await codec.default();
     return codec;
   }

@@ -3,6 +3,6 @@
   "workspaces": [
     "contracts",
     "app",
-    "image-codec/pkg"
+    "wasm/pkg"
   ]
 }

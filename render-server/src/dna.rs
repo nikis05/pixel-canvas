@@ -45,8 +45,8 @@ impl Dna {
                                 bits.pop();
                             }
 
-                            let level3_bits3 = level2.next_reference()?.parser().load_bits(24)?;
-                            bits.extend_from_raw_slice(&level3_bits3);
+                            let level3_last = level2.next_reference()?.parser().load_bits(24)?;
+                            bits.extend_from_raw_slice(&level3_last);
 
                             is_leftmost_branch = false;
                         }

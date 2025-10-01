@@ -68,17 +68,17 @@ jobs:
             Cargo.lock
             render-server
             rust-colors
-            image-codec
+            wasm
             viewer
             palette.json
       - name: Determine cache key
         id: cache-key
-        run: echo "KEY=${{ hashFiles('image-codec/**') }}" >> "$GITHUB_OUTPUT"
+        run: echo "KEY=${{ hashFiles('wasm/**') }}" >> "$GITHUB_OUTPUT"
       - name: Lookup WASM
         uses: actions/cache/restore@v4
         id: lookup-wasm
         with:
-          path: image-codec/pkg/
+          path: wasm/pkg/
           key: ${{ runner.os }}-wasm-${{ steps.cache-key.outputs.key }}
           lookup-only: true
       - name: Setup Rust
@@ -106,12 +106,12 @@ jobs:
           crate: wasm-pack
       - name: Build WASM
         if: steps.lookup-wasm.outputs.cache-hit != 'true'
-        run: cd image-codec && wasm-pack build --release --target web
+        run: cd wasm && wasm-pack build --release --target web
       - name: Upload WASM
         if: steps.lookup-wasm.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: image-codec/pkg/
+          path: wasm/pkg/
           key: ${{ runner.os }}-wasm-${{ steps.cache-key.outputs.key }}
   app:
     name: App to GH pages
@@ -129,13 +129,13 @@ jobs:
             package.json
             package-lock.json
             contracts/package.json
-            image-codec
+            wasm
             app
       - name: Download WASM
         uses: actions/cache/restore@v4
         with:
-          path: image-codec/pkg/
-          key: ${{ runner.os }}-wasm-${{ hashFiles('image-codec/**') }}
+          path: wasm/pkg/
+          key: ${{ runner.os }}-wasm-${{ hashFiles('wasm/**') }}
       - name: NPM install
         run: npm ci --workspace app
       - name: Build
