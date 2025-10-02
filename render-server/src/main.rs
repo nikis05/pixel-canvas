@@ -12,6 +12,7 @@ use axum::{
 use either::Either;
 use futures::TryStreamExt;
 use serde::Deserialize;
+use tower_http::cors::CorsLayer;
 use viewer::{Viewer, ViewerError};
 
 mod dna;
@@ -70,6 +71,8 @@ async fn main() {
     }
 
     let viewer = Viewer::new(env.viewer_api_url, env.viewer_api_key);
+
+    let cors = CorsLayer::permissive();
 
     let app = Router::new()
         .route(
@@ -148,7 +151,8 @@ async fn main() {
                 }
             }),
         )
-        .route("/health", routing::get(async || "ok"));
+        .route("/health", routing::get(async || "ok"))
+        .layer(cors);
 
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", env.port))
         .await
