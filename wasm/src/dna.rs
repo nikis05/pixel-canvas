@@ -1,3 +1,5 @@
+use std::iter::repeat_n;
+
 use base64::Engine;
 use bitvec::{BitArr, array::BitArray, field::BitField, order::Lsb0, vec::BitVec, view::BitView};
 use itertools::Itertools;
@@ -59,6 +61,7 @@ impl Dna {
             bits.force_align();
             bits.set_uninitialized(false);
             let bits = bits.into_vec();
+            dbg!(&bits, n);
             builder.store_bits(n, &bits).unwrap();
         };
 
@@ -102,4 +105,10 @@ impl Dna {
 
         level0.build().unwrap()
     }
+}
+
+#[test]
+fn test() {
+    let dna = Dna::from_data(repeat_n(repeat_n(63, 64).collect_vec(), 64).collect_vec());
+    dna.to_cell();
 }

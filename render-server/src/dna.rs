@@ -1,6 +1,9 @@
 use bitvec::{array::BitArray, field::BitField, prelude::*};
 use std::fmt::Display;
-use tonlib_core::{cell::ArcCell, tlb_types::tlb::TLB};
+use tonlib_core::{
+    cell::{ArcCell, CellParser, TonCellError},
+    tlb_types::tlb::TLB,
+};
 
 #[derive(Debug)]
 pub struct Dna(bitvec::BitArr!(for 24_576, in u8));
@@ -15,9 +18,14 @@ impl Dna {
             .parse_fully(|parser| {
                 let mut bits = BitVec::new();
 
-                let level0_bits = parser.load_bits(1023)?;
-                bits.extend_from_raw_slice(&level0_bits);
-                bits.pop();
+                let mut put_bits = |parser: &mut CellParser, n: usize| {
+                    let chunk = parser.load_bits(n)?;
+                    let slice = BitSlice::<_, Lsb0>::from_slice(&chunk);
+                    bits.extend_from_bitslice(&slice[..n]);
+                    Ok::<_, TonCellError>(())
+                };
+
+                put_bits(parser, 1023)?;
 
                 let mut is_leftmost_branch = true;
 
@@ -25,28 +33,24 @@ impl Dna {
                     let level1 = parser.next_reference()?;
                     let mut level1 = level1.parser();
 
-                    let level1_bits = level1.load_bits(1023)?;
-                    bits.extend_from_raw_slice(&level1_bits);
-                    bits.pop();
+                    put_bits(&mut level1, 1023)?;
 
                     for _ in 0..4 {
                         let level2 = level1.next_reference()?;
                         let mut level2 = level2.parser();
 
-                        let level2_bits = level2.load_bits(1023)?;
-                        bits.extend_from_raw_slice(&level2_bits);
-                        bits.pop();
+                        put_bits(&mut level2, 1023)?;
 
                         if is_leftmost_branch {
                             for _ in 0..3 {
-                                let level3_bits =
-                                    level2.next_reference()?.parser().load_bits(1023)?;
-                                bits.extend_from_raw_slice(&level3_bits);
-                                bits.pop();
+                                let level3 = level2.next_reference()?;
+                                let mut level3 = level3.parser();
+                                put_bits(&mut level3, 1023)?;
                             }
 
-                            let level3_last = level2.next_reference()?.parser().load_bits(24)?;
-                            bits.extend_from_raw_slice(&level3_last);
+                            let level3_last = level2.next_reference()?;
+                            let mut level3_last = level3_last.parser();
+                            put_bits(&mut level3_last, 24)?;
 
                             is_leftmost_branch = false;
                         }

@@ -328,5 +328,5 @@ function squareAround({ x, y }: Point, size: number) {
 
   return xs
     .flatMap((cx) => ys.map((cy) => ({ x: cx, y: cy })))
-    .filter(({ x, y }) => x >= 0 && x <= 64 && y >= 0 && y <= 64);
+    .filter(({ x, y }) => x >= 0 && x <= 63 && y >= 0 && y <= 63);
 }
