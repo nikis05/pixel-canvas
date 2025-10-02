@@ -38,6 +38,8 @@ export const EditorProvider: FC<PropsWithChildren<{ editor: Editor }>> = ({
   children,
 }) => {
   const editorRef = useRef<Editor>(editor);
+  // @ts-expect-error window assignment
+  window["__EDITOR__"] = editor;
   const isDrawing = useRef<boolean>(false);
 
   const [color, setColor] = useState<Color | null>(null);

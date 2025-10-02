@@ -55,8 +55,12 @@ impl Dna {
         let mut put_bits = |builder: &mut CellBuilder, n: usize| {
             let slice = &self.0[offset..offset + n];
             offset += n;
-            let bits = slice.to_bitvec();
-            builder.store_bits(n, bits.as_raw_slice()).unwrap();
+            let mut bits = slice.to_bitvec();
+            bits.force_align();
+            bits.set_uninitialized(false);
+            let bits = bits.into_vec();
+            dbg!(&bits, n);
+            builder.store_bits(n, &bits).unwrap();
         };
 
         let put_ref = |builder: &mut CellBuilder, cell: Cell| {

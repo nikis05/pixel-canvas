@@ -6,6 +6,7 @@ import React, {
   ChangeEvent,
   FC,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -29,6 +30,10 @@ export const BakeModal: FC<{
   );
 
   const [bakeResult, setBakeResult] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setBakeResult(null);
+  }, [handle.isOpen]);
 
   const withSwrProps = useMemo(
     () => ({
