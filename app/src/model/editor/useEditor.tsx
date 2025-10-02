@@ -95,6 +95,7 @@ export type UseEditorOutput = {
   saveToFile: (upscale: boolean) => Promise<void>;
   copyDna: () => Promise<void>;
   loadFromDna: (dna: string) => Promise<boolean>;
+  packForBaking: (title: string, artist: string) => Promise<string>;
   undo: () => void;
   redo: () => void;
   mayUndo: boolean;
@@ -150,6 +151,12 @@ export function useEditor(): UseEditorOutput {
     [editor]
   );
 
+  const packForBaking = useCallback(
+    (title: string, artist: string) =>
+      editor.current.packForBaking(title, artist),
+    [editor]
+  );
+
   const undo = useCallback(() => editor.current.undo(), [editor]);
 
   const redo = useCallback(() => editor.current.redo(), [editor]);
@@ -192,6 +199,7 @@ export function useEditor(): UseEditorOutput {
       saveToFile,
       copyDna,
       loadFromDna,
+      packForBaking,
       undo,
       redo,
       mayUndo,
@@ -210,6 +218,7 @@ export function useEditor(): UseEditorOutput {
       saveToFile,
       copyDna,
       loadFromDna,
+      packForBaking,
       undo,
       redo,
       mayUndo,

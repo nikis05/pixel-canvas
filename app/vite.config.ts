@@ -5,6 +5,7 @@ import mkcert from "vite-plugin-mkcert";
 import tailwindcss from "@tailwindcss/vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import path, { resolve } from "path";
+import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -17,6 +18,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    nodePolyfills(),
     // Allows using React dev server along with building a React application with Vite.
     // https://npmjs.com/package/@vitejs/plugin-react-swc
     react(),

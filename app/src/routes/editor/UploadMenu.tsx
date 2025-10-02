@@ -10,7 +10,7 @@ import {
   Snackbar,
   Spinner,
 } from "@telegram-apps/telegram-ui";
-import { ChangeEvent, FC, useCallback, useState } from "react";
+import { ChangeEvent, FC, useCallback, useRef, useState } from "react";
 import { BsClipboard, BsFileArrowUp } from "react-icons/bs";
 import { useIsMounted } from "usehooks-ts";
 import { confirmReplace } from "./replaceAlert";
@@ -43,13 +43,13 @@ export const UploadMenu: FC = () => {
     [confirmReplace, setFileUploading, loadFromFile, isMounted]
   );
 
-  const [dna, setDna] = useState<string>("");
+  const dna = useRef<string>("");
 
   const onDnaChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      setDna(e.target.value);
+      dna.current = e.target.value;
     },
-    [setDna]
+    [dna]
   );
 
   const [loadingFromDna, setLoadingFromDna] = useState<boolean>(false);
@@ -61,7 +61,7 @@ export const UploadMenu: FC = () => {
     toVoid(async () => {
       if (!(await confirmReplace(isEmpty))) return;
       setLoadingFromDna(true);
-      const result = await loadFromDna(dna);
+      const result = await loadFromDna(dna.current);
       if (!isMounted()) return;
       setLoadingFromDna(false);
       setLoadFromDnaResult(result);
@@ -113,7 +113,7 @@ export const UploadMenu: FC = () => {
           description="Enter image DNA string"
         >
           <div className="*:p-0! *:pt-4! *:pb-4!">
-            <Input placeholder="Image DNA" value={dna} onChange={onDnaChange} />
+            <Input placeholder="Image DNA" onChange={onDnaChange} />
           </div>
           <div className="mt-4 flex items-center">
             <Button onClick={onLoadFromDna}>Load from DNA</Button>

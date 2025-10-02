@@ -12,8 +12,8 @@ export class ModalHandle {
   };
 }
 
-export const useModal = (): ModalHandle => {
-  const [open, setOpen] = useState<boolean>(false);
+export const useModal = (isOpen: boolean = false): ModalHandle => {
+  const [open, setOpen] = useState<boolean>(isOpen);
   const state = useMemo(() => new ModalHandle(open, setOpen), [open, setOpen]);
   return state;
 };

@@ -18,7 +18,8 @@ import { DownloadMenu } from "./DownloadMenu";
 import { confirmReplace } from "./replaceAlert";
 import { toVoid } from "@/utils/toVoid";
 import tonIcon from "./ton_symbol.svg";
-import { useBakeButton } from "./useBakeButton";
+import { BakeModal } from "./BakeModal";
+import { useTonConnectModal, useTonConnectUI } from "@tonconnect/ui-react";
 
 type Tool = "pencil" | "eraser";
 
@@ -102,12 +103,21 @@ export const EditorMenu: FC = () => {
     );
   }, [paletteModal.isOpen, pickedColor, brushSize]);
 
-  const renderTonIcon = useCallback(
-    () => <img className="h-4 w-4" src={tonIcon} />,
-    []
-  );
+  const [tonUI] = useTonConnectUI();
 
-  const bakeButton = useBakeButton();
+  const connectModal = useTonConnectModal();
+  const bakeModal = useModal();
+
+  const bakeButtonActive =
+    connectModal.state.status == "opened" || bakeModal.isOpen;
+
+  const onBakeButtonClick = useCallback(() => {
+    if (!tonUI.account) {
+      connectModal.open();
+      return;
+    }
+    bakeModal.open();
+  }, [tonUI, connectModal, bakeModal]);
 
   return (
     <>
@@ -150,10 +160,10 @@ export const EditorMenu: FC = () => {
           {
             key: "bake",
             renderIcon: renderTonIcon,
-            text: "Make NFT",
-            active: bakeButton.isActive,
+            text: tonUI.account ? "Make NFT" : "Log in to make NFT",
+            active: bakeButtonActive,
             primary: true,
-            onClick: bakeButton.onClick,
+            onClick: onBakeButtonClick,
           },
         ]}
       />
@@ -173,6 +183,11 @@ export const EditorMenu: FC = () => {
       <Modal handle={downloadModal} srText="Download image">
         <DownloadMenu />
       </Modal>
+      <BakeModal handle={bakeModal} />
     </>
   );
 };
+
+function renderTonIcon() {
+  return <img className="h-4 w-4" src={tonIcon} />;
+}

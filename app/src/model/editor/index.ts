@@ -254,6 +254,11 @@ export class Editor {
     return true;
   }
 
+  async packForBaking(title: string, artist: string): Promise<string> {
+    const codec = await this.getCodec();
+    return codec.pack_bake(title, artist, this.state.toData());
+  }
+
   static empty(): Editor {
     return new Editor(State.empty(), [], [], true);
   }

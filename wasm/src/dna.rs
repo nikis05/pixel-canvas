@@ -12,15 +12,10 @@ impl Dna {
             .decode(base64)
             .ok()?;
 
-        dbg!(1);
-
         let bytes = <[u8; 3072]>::try_from(bytes).ok()?;
-
-        dbg!(2);
 
         let bitarr = BitArray::new(bytes);
 
-        dbg!(3);
         Some(Self(bitarr))
     }
 
@@ -90,7 +85,7 @@ impl Dna {
                     }
 
                     let mut level3_last = CellBuilder::new();
-                    put_bits(&mut level3_last, 23);
+                    put_bits(&mut level3_last, 24);
                     put_ref(&mut level2, level3_last.build().unwrap());
 
                     is_leftmost_branch = false;
