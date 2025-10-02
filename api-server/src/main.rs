@@ -7,6 +7,7 @@ use axum::{
 use either::Either;
 use serde::{Deserialize, Serialize};
 use tonlib_core::TonAddress;
+use tower_http::cors::CorsLayer;
 use viewer::{Viewer, ViewerError, ViewerResult};
 
 #[derive(Deserialize)]
@@ -55,6 +56,8 @@ async fn main() {
         page: u32,
     }
 
+    let cors = CorsLayer::permissive();
+
     let app = Router::new()
         .route(
             "/api/nfts",
@@ -98,7 +101,8 @@ async fn main() {
                 handle_viewer_result(result)
             }),
         )
-        .route("/health", routing::get(async || "ok"));
+        .route("/health", routing::get(async || "ok"))
+        .layer(cors);
 
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", env.port))
         .await
