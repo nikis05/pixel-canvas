@@ -15,6 +15,15 @@ import { EditorProvider } from "./model/editor/useEditor.tsx";
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 const editor = initEditor();
 
+function loadEnvVar(name: string) {
+  const value = import.meta.env[name] as string | undefined;
+  if (!value) throw new Error(`Missing ${name} env variable`);
+  return value;
+}
+
+export const STORE_ADDRESS = loadEnvVar("VITE_STORE_ADDRESS");
+export const API_URL = loadEnvVar("VITE_API_URL");
+
 try {
   initMiniApp();
 
@@ -34,6 +43,7 @@ try {
       </ErrorBoundary>
     </StrictMode>
   );
-} catch {
+} catch (e) {
+  console.log(e);
   root.render(<EnvUnsupported />);
 }
