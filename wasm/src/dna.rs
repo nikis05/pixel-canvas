@@ -59,7 +59,6 @@ impl Dna {
             bits.force_align();
             bits.set_uninitialized(false);
             let bits = bits.into_vec();
-            dbg!(&bits, n);
             builder.store_bits(n, &bits).unwrap();
         };
 
