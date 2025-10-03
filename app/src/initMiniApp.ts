@@ -3,7 +3,6 @@ import {
   mountBackButton,
   restoreInitData,
   init as initSDK,
-  bindThemeParamsCssVars,
   mountViewport,
   bindViewportCssVars,
   mockTelegramEnv,
@@ -77,11 +76,6 @@ export function init(): void {
 
   if (miniApp.mountSync.isAvailable()) {
     miniApp.mountSync();
-    try {
-      bindThemeParamsCssVars();
-    } catch {
-      console.log("CSS var init throws");
-    }
   }
 
   mountViewport.isAvailable() &&
