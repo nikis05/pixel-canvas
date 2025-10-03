@@ -19,9 +19,26 @@ impl Dna {
                 let mut bits = BitVec::new();
 
                 let mut put_bits = |parser: &mut CellParser, n: usize| {
-                    let chunk = parser.load_bits(n)?;
-                    let slice = BitSlice::<_, Lsb0>::from_slice(&chunk);
-                    bits.extend_from_bitslice(&slice[..n]);
+                    if n == 0 {
+                        return Ok::<_, TonCellError>(());
+                    }
+
+                    let full_bytes = n / 8;
+                    let leftover_bits = n % 8;
+                    let full_bits = full_bytes * 8;
+
+                    if full_bits > 0 {
+                        let raw = parser.load_bits(full_bits)?;
+
+                        let slice = BitSlice::<u8, Lsb0>::from_slice(&raw);
+                        bits.extend_from_bitslice(&slice[..full_bits]);
+                    }
+
+                    for _ in 0..leftover_bits {
+                        let b = parser.load_bit()?;
+                        bits.push(b);
+                    }
+
                     Ok::<_, TonCellError>(())
                 };
 
