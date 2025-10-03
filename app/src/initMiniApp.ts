@@ -77,11 +77,6 @@ export function init(): void {
 
   if (miniApp.mountSync.isAvailable()) {
     miniApp.mountSync();
-    try {
-      bindThemeParamsCssVars();
-    } catch {
-      console.log("CSS var init throws");
-    }
   }
 
   mountViewport.isAvailable() &&
