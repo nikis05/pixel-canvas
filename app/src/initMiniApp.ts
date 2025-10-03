@@ -3,7 +3,6 @@ import {
   mountBackButton,
   restoreInitData,
   init as initSDK,
-  bindThemeParamsCssVars,
   mountViewport,
   bindViewportCssVars,
   mockTelegramEnv,
