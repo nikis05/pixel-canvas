@@ -70,7 +70,10 @@ export function makeDna({
         level3.storeRef(new Builder().storeBit(true));
     }
 
-    const level3Rightmost = new Builder().storeUint(0, incorrectSizeLevel3CellRightmost ? 25 : 24);
+    const level3Rightmost = new Builder().storeUint(
+        fillWithOnes ? BigInt('0b' + '1'.repeat(24)) : 0,
+        incorrectSizeLevel3CellRightmost ? 25 : 24,
+    );
 
     if (extraneousLevel4CellRightmostLevel3Cell) {
         level3Rightmost.storeRef(new Builder().storeBit(true));
