@@ -16,6 +16,8 @@ export const MyCollection: FC<{ userAddress: string }> = ({ userAddress }) => {
   );
 
   const { data, isValidating, size, setSize, mutate } = swr;
+  console.log("todo", mutate);
+
   const error = swr.error as unknown;
 
   const items = data?.flat() ?? [];

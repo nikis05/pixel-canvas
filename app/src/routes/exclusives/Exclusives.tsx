@@ -13,5 +13,6 @@ export const Exclusives: FC = () => {
       resp.json()
     )
   );
+  console.log("todo", exclusives);
   return <Page back={true}>Exclusives</Page>;
 };
