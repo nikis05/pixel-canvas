@@ -144,7 +144,12 @@ jobs:
       - name: NPM install
         run: npm ci --workspace app
       - name: Build
-        run: cd app && VITE_STORE_ADDRESS=${{ vars.STORE_ADDRESS }} VITE_API_URL=${{ vars.API_URL }} npm run build
+        run: >
+          cd app &&
+          VITE_STORE_ADDRESS=${{ vars.STORE_ADDRESS }}
+          VITE_API_URL=${{ vars.API_URL }}
+          VITE_RENDER_URL=${{ vars.RENDER_URL }}
+          npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
