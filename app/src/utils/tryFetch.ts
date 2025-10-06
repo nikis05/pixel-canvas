@@ -11,7 +11,7 @@ export function tryFetch(url: string): Promise<Response> {
           throw new Error("Too many requests");
         } else {
           throw new AbortError(
-            `Request failed: ${resp.body} ${resp.statusText}`
+            `Request failed: ${resp.status} ${resp.statusText}`
           );
         }
       } catch (e: unknown) {
