@@ -193,7 +193,7 @@ impl Viewer {
             type Output = Vec<NftItem>;
 
             fn job_payload(&self) -> ((reqwest::Method, &'static str), serde_json::Value) {
-                const PAGE_SIZE: u32 = 10;
+                const PAGE_SIZE: u32 = 4;
 
                 let mut params = serde_json::value::Map::with_capacity(4);
                 params.insert(
