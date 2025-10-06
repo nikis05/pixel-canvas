@@ -19,20 +19,25 @@ import { useTonConnectUI } from "@tonconnect/ui-react";
 import { toVoid } from "@/utils/toVoid";
 import { useEditor } from "@/model/editor/useEditor";
 import { BsCheckCircleFill, BsExclamationCircleFill } from "react-icons/bs";
+import { tryFetch } from "@/utils/tryFetch";
 
 export const BakeModal: FC<{
   handle: ModalHandle;
 }> = ({ handle }) => {
-  const itemPrice = useSWR("item_price", () =>
-    fetch(`${API_URL}/item_price`)
-      .then((resp) => resp.text())
-      .then((text) => parseInt(text, 10))
+  const itemPrice = useSWR(
+    "item_price",
+    () =>
+      tryFetch(`${API_URL}/item_price`)
+        .then((resp) => resp.text())
+        .then((text) => parseInt(text, 10)),
+    { revalidateOnMount: true }
   );
 
   const [bakeResult, setBakeResult] = useState<boolean | null>(null);
 
   useEffect(() => {
     setBakeResult(null);
+    void itemPrice.mutate();
   }, [handle.isOpen]);
 
   const withSwrProps = useMemo(
