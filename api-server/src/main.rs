@@ -53,7 +53,7 @@ async fn main() {
     #[derive(Deserialize)]
     struct NftsParams {
         owner_address: String,
-        page: u32,
+        page: usize,
     }
 
     let cors = CorsLayer::permissive();
