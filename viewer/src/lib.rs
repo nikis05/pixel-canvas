@@ -124,7 +124,7 @@ impl Viewer {
                 };
                 job.callback
                     .send(result.map(|t| t.0).map_err(|err| err.0))
-                    .unwrap();
+                    .ok();
             }
         })));
 
