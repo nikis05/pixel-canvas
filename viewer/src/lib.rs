@@ -26,6 +26,12 @@ struct Job {
 pub type ViewerResult<T> = Result<T, Either<ViewerError, anyhow::Error>>;
 
 #[derive(Serialize)]
+pub struct NftItemsResponse {
+    items: Vec<NftItem>,
+    has_next_page: bool,
+}
+
+#[derive(Serialize)]
 pub struct NftItem {
     pub index: u32,
     pub name: String,
@@ -181,20 +187,20 @@ impl Viewer {
         &self,
         collection_address: TonAddress,
         owner_address: TonAddress,
-        page: Option<u32>,
-    ) -> ViewerResult<Vec<NftItem>> {
+        page: Option<usize>,
+    ) -> ViewerResult<NftItemsResponse> {
         struct GetItems {
             collection_address: TonAddress,
             owner_address: TonAddress,
-            page: Option<u32>,
+            page: Option<usize>,
         }
 
+        const PAGE_SIZE: usize = 4;
+
         impl Task for GetItems {
-            type Output = Vec<NftItem>;
+            type Output = NftItemsResponse;
 
             fn job_payload(&self) -> ((reqwest::Method, &'static str), serde_json::Value) {
-                const PAGE_SIZE: u32 = 4;
-
                 let mut params = serde_json::value::Map::with_capacity(4);
                 params.insert(
                     "collection_address".into(),
@@ -206,7 +212,7 @@ impl Viewer {
                 );
 
                 if let Some(page) = self.page {
-                    params.insert("limit".into(), PAGE_SIZE.into());
+                    params.insert("limit".into(), (PAGE_SIZE + 1).into());
                     params.insert("offset".into(), (page * PAGE_SIZE).into());
                 }
 
@@ -236,9 +242,11 @@ impl Viewer {
 
                 let payload = serde_json::from_value::<Payload>(output)?;
 
+                let has_next_page = payload.nft_items.len() > PAGE_SIZE;
                 let items = payload
                     .nft_items
                     .into_iter()
+                    .take(PAGE_SIZE)
                     .map(|item| {
                         Ok::<_, anyhow::Error>(NftItem {
                             index: item.index.parse::<u32>().map_err(|_| {
@@ -250,7 +258,10 @@ impl Viewer {
                     })
                     .collect::<Result<Vec<_>, _>>()?;
 
-                Ok(items)
+                Ok(NftItemsResponse {
+                    items,
+                    has_next_page,
+                })
             }
         }
 
@@ -348,6 +359,7 @@ impl Viewer {
         let mut items = self
             .get_items(collection_address, store_address, None)
             .await?
+            .items
             .into_iter()
             .map(|item| (item.index, item))
             .collect::<HashMap<_, _>>();
