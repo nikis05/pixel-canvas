@@ -23,6 +23,7 @@ function loadEnvVar(name: string) {
 
 export const STORE_ADDRESS = loadEnvVar("VITE_STORE_ADDRESS");
 export const API_URL = loadEnvVar("VITE_API_URL");
+export const RENDER_URL = loadEnvVar("VITE_RENDER_URL");
 
 try {
   initMiniApp();

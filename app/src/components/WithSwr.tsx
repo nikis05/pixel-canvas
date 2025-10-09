@@ -13,9 +13,9 @@ export function WithSwr<T, Props = object>({
   Component,
   props,
 }: WithSwrProps<T, Props>): React.ReactNode {
-  const { data, error, isLoading, mutate } = swr;
+  const { data, error, isValidating, mutate } = swr;
 
-  const hasData = error == undefined && !isLoading;
+  const hasData = error == undefined && !isValidating;
 
   const onRefreshClick = useCallback(
     (e: React.MouseEvent) => {
