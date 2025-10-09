@@ -40,8 +40,6 @@ export const Canvas: FC = React.memo(() => {
     };
 
     setStageSize(stageSize);
-
-    console.log("updating size", stageSize);
   }, [containerRef, sceneWidth, sceneHeight, setStageSize]);
 
   useEffect(() => {
