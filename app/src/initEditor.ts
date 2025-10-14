@@ -11,9 +11,12 @@ const STORAGE_KEY = "@pixel-canvas/editor";
 export async function initEditor(): Promise<Editor> {
   const useLocalStorage = import.meta.env.DEV;
 
+  const isCloudStorageAvail = getCloudStorageItem.isAvailable();
+  console.log("Cloud storage availability:", { isCloudStorageAvail });
+
   const editorData = useLocalStorage
     ? (localStorage.getItem(STORAGE_KEY) ?? "")
-    : getCloudStorageItem.isAvailable()
+    : isCloudStorageAvail
       ? await getCloudStorageItem(STORAGE_KEY)
       : null;
   const restoredEditor =
