@@ -10,6 +10,7 @@ bytes.workspace = true
 either.workspace = true
 futures.workspace = true
 futures-retry.workspace = true
+itertools.workspace = true
 reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true

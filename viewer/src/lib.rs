@@ -2,6 +2,7 @@ use abort_on_drop::ChildTask;
 use either::Either;
 use futures::TryFutureExt;
 use futures_retry::{FutureRetry, RetryPolicy};
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::{mpsc, oneshot};
@@ -366,6 +367,7 @@ impl Viewer {
 
         let exclusives_with_data = exclusives_offered
             .into_iter()
+            .sorted_by_key(|(index, _)| *index)
             .filter_map(|(index, price)| items.remove(&index).map(|data| (data, price)))
             .collect();
 

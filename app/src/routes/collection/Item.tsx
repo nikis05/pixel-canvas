@@ -22,7 +22,7 @@ export const Item: FC<{
     <Card>
       {purchaseable && (
         <CardChip onClick={purchaseable.onPurchase}>
-          {fromNano(purchaseable.price)}
+          {fromNano(purchaseable.price)}ton
         </CardChip>
       )}
       {imageUrl !== null ? (
