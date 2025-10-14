@@ -31,15 +31,14 @@ export const BakeModal: FC<{
       tryFetch(`${API_URL}/item_price`)
         .then((resp) => resp.text())
         .then((text) => parseInt(text, 10)),
-    { revalidateOnMount: true }
+    { revalidateOnMount: false }
   );
 
   const [bakeResult, setBakeResult] = useState<boolean | null>(null);
 
   useEffect(() => {
     setBakeResult(null);
-    itemPrice.mutate().catch(captureException);
-  }, [handle.isOpen, itemPrice]);
+  }, [handle.isOpen, setBakeResult]);
 
   const isMounted = useIsMounted();
   const withSwrProps = useMemo(
@@ -150,7 +149,7 @@ const BakeForm: FC<{
       description={
         <div className="mb-6">
           <div>Make a unique NFT with your pixel-art</div>
-          <div>Current service fee: {price}ton</div>
+          <div>Current service fee: {price} ton</div>
           <div className="mb-4 *:p-0! *:pt-4! *:pb-4!">
             <Input placeholder="Artwork title" onChange={onTitleChange} />
             <Input placeholder="Artist signature" onChange={onArtistChange} />

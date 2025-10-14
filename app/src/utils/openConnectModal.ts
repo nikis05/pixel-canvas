@@ -3,8 +3,9 @@ import { TonConnectUI } from "@tonconnect/ui-react";
 
 export function openConnectModal(tonUI: TonConnectUI, onSelected: () => void) {
   const cancel = tonUI.onModalStateChange((state) => {
+    if (state.status != "closed") return;
     cancel();
-    if (state.status == "closed" && state.closeReason == "wallet-selected") {
+    if (state.closeReason == "wallet-selected") {
       onSelected();
     }
   });

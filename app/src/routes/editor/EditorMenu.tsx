@@ -4,7 +4,7 @@ import { ToolMenu } from "@/components/ToolMenu/ToolMenu";
 import { Color } from "@/model/editor";
 import { useEditor } from "@/model/editor/useEditor";
 import classNames from "classnames";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import React, { FC, useCallback, useEffect, useMemo, useState } from "react";
 import {
   BsDownload,
   BsEraser,
@@ -25,7 +25,7 @@ import { captureException } from "@sentry/react";
 
 type Tool = "pencil" | "eraser";
 
-export const EditorMenu: FC = () => {
+export const EditorMenu: FC = React.memo(() => {
   const {
     setColor: setCurrentColor,
     brushSize,
@@ -191,7 +191,7 @@ export const EditorMenu: FC = () => {
       <BakeModal handle={bakeModal} />
     </>
   );
-};
+});
 
 function renderTonIcon() {
   return <img className="h-4 w-4" src={tonIcon} />;
