@@ -1,5 +1,5 @@
-import { debounceTime, timeout } from "rxjs";
-import { Editor, StateSnapshot } from "./model/editor";
+import { debounceTime } from "rxjs";
+import { Editor } from "./model/editor";
 import { captureException } from "@sentry/react";
 import {
   getCloudStorageItem,

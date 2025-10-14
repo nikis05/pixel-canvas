@@ -17,7 +17,7 @@ export const ItemList: FC<{
   const rowVirtualizer = useVirtualizer({
     count: rowsCount + (hasNextPage ? 1 : 0),
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 408,
+    estimateSize: () => Math.min(window.innerWidth, 280) + 102,
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -48,15 +48,11 @@ export const ItemList: FC<{
               <Spinner size="l" />
             );
           } else {
-            const item1 = items[row.index * 2];
-            const item2 = items.at(row.index * 2 + 1);
+            const item = items[row.index];
             content = (
               <>
-                <div className="p-5 w-[min(100%,_280px)]">
-                  <Item data={item1} />
-                </div>
-                <div className="p-5 w-[min(100%,_280px)]">
-                  {item2 ? <Item data={item2} /> : <div className="w-65" />}
+                <div className="w-[min(100%,_280px)] p-5 flex justify-center">
+                  <Item data={item} />
                 </div>
               </>
             );
