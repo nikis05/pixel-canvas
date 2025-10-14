@@ -93,7 +93,7 @@ export const Exclusives: FC = () => {
             )}
           </div>
         ) : (
-          <div className="w-full overflow-y-auto flex justify-center">
+          <div className="w-full overflow-y-auto flex flex-col items-center">
             {items.map(([item]) => {
               return (
                 <div
