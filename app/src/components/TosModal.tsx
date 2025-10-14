@@ -1,20 +1,33 @@
 import { FC, useCallback, useEffect } from "react";
-import { Modal, ModalHandle } from "./Modal";
-import { ACCEPTED_TOS_VERSION, TOS_STORAGE_KEY, TOS_VERSION } from "..";
+import { Modal, useModal } from "./Modal";
 import { Section } from "./Section";
 import { BsFileText } from "react-icons/bs";
 import { Link } from "./Link";
 import { Button } from "@telegram-apps/telegram-ui";
 import { setCloudStorageItem } from "@telegram-apps/sdk-react";
 import { captureException } from "@sentry/react";
+import { TOS_STORAGE_KEY } from "@/App";
 
-export const TosModal: FC<{ handle: ModalHandle }> = ({ handle }) => {
+const TOS_VERSION = "1";
+
+export type TosModalProps = {
+  acceptedTosVersion:
+    | { available: false }
+    | { available: true; version: string };
+};
+
+export const TosModal: FC<TosModalProps> = ({ acceptedTosVersion }) => {
+  const handle = useModal();
+
   useEffect(() => {
-    if (ACCEPTED_TOS_VERSION == TOS_VERSION || ACCEPTED_TOS_VERSION === null)
+    if (
+      !acceptedTosVersion.available ||
+      acceptedTosVersion.version == TOS_VERSION
+    )
       return;
-    handle.open();
+    handle.setOpen(true);
     handle.setLocked(true);
-  }, [handle]);
+  }, [acceptedTosVersion, handle]);
 
   const onButtonClick = useCallback(() => {
     if (import.meta.env.DEV) {

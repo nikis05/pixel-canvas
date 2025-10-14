@@ -1,37 +1,22 @@
 import { debounceTime } from "rxjs";
 import { Editor } from "./model/editor";
 import { captureException } from "@sentry/react";
-import {
-  getCloudStorageItem,
-  setCloudStorageItem,
-} from "@telegram-apps/sdk-react";
+import { setCloudStorageItem } from "@telegram-apps/sdk-react";
+import { EDITOR_STORAGE_KEY } from "./App";
 
-const STORAGE_KEY = "@pixel-canvas/editor";
-
-export async function initEditor(
-  isCloudStorageAvail: boolean
-): Promise<Editor> {
+export function initEditor(editorData: string | null): Editor {
   const useLocalStorage = import.meta.env.DEV;
-
-  console.log("Fetching editor data");
-
-  const editorData = useLocalStorage
-    ? (localStorage.getItem(STORAGE_KEY) ?? "")
-    : isCloudStorageAvail
-      ? await getCloudStorageItem(STORAGE_KEY)
-      : null;
-
-  console.log("Restoring editor");
 
   const restoredEditor =
     editorData !== null ? Editor.restore(editorData) : null;
   const editor = restoredEditor ?? Editor.empty();
 
   const backup = useLocalStorage
-    ? (editor: Editor) => localStorage.setItem(STORAGE_KEY, editor.save())
+    ? (editor: Editor) =>
+        localStorage.setItem(EDITOR_STORAGE_KEY, editor.save())
     : (editor: Editor) => {
         if (setCloudStorageItem.isAvailable()) {
-          setCloudStorageItem(STORAGE_KEY, editor.save()).catch(
+          setCloudStorageItem(EDITOR_STORAGE_KEY, editor.save()).catch(
             captureException
           );
         }
