@@ -45,13 +45,17 @@ async function main() {
 
     const editor = await initEditor(isCloudStorageAvail);
 
+    console.log("Initialized editor");
+
     ACCEPTED_TOS_VERSION = import.meta.env.DEV
       ? (localStorage.getItem(TOS_STORAGE_KEY) ?? "")
       : isCloudStorageAvail
         ? await getCloudStorageItem(TOS_STORAGE_KEY)
         : null;
 
-    console.log("");
+    console.log("Loaded TOS version");
+
+    console.log("Preparing for render");
 
     root.render(
       <StrictMode>
