@@ -34,16 +34,24 @@ async function main() {
   });
 
   const root = ReactDOM.createRoot(document.getElementById("root")!);
-  const editor = await initEditor();
-
-  ACCEPTED_TOS_VERSION = import.meta.env.DEV
-    ? (localStorage.getItem(TOS_STORAGE_KEY) ?? "")
-    : getCloudStorageItem.isAvailable()
-      ? await getCloudStorageItem(TOS_STORAGE_KEY)
-      : null;
 
   try {
     initMiniApp();
+
+    const isCloudStorageAvail = getCloudStorageItem.isAvailable();
+
+    console.log("Cloud storage support: ", getCloudStorageItem.isSupported());
+    console.log("Cloud storage availability: ", isCloudStorageAvail);
+
+    const editor = await initEditor(isCloudStorageAvail);
+
+    ACCEPTED_TOS_VERSION = import.meta.env.DEV
+      ? (localStorage.getItem(TOS_STORAGE_KEY) ?? "")
+      : isCloudStorageAvail
+        ? await getCloudStorageItem(TOS_STORAGE_KEY)
+        : null;
+
+    console.log("");
 
     root.render(
       <StrictMode>
@@ -61,6 +69,7 @@ async function main() {
         </ErrorBoundary>
       </StrictMode>
     );
+    console.log("Initial render complete");
   } catch (e) {
     console.log(e);
     root.render(<EnvUnsupported />);
