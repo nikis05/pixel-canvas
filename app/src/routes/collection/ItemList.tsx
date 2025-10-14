@@ -13,7 +13,7 @@ export const ItemList: FC<{
 }> = ({ items, error, fetchMore, hasNextPage }) => {
   const parentRef = useRef<HTMLDivElement>(null);
 
-  const rowsCount = Math.ceil(items.length / 2);
+  const rowsCount = items.length;
   const rowVirtualizer = useVirtualizer({
     count: rowsCount + (hasNextPage ? 1 : 0),
     getScrollElement: () => parentRef.current,
