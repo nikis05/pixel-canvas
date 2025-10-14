@@ -8,10 +8,11 @@ import {
 
 const STORAGE_KEY = "@pixel-canvas/editor";
 
-export async function initEditor(): Promise<Editor> {
+export async function initEditor(
+  isCloudStorageAvail: boolean
+): Promise<Editor> {
   const useLocalStorage = import.meta.env.DEV;
 
-  const isCloudStorageAvail = getCloudStorageItem.isAvailable();
   console.log("Cloud storage availability:", { isCloudStorageAvail });
 
   const editorData = useLocalStorage
