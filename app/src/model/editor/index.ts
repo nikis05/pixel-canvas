@@ -273,7 +273,7 @@ export class Editor {
 
   static restore(json: string): Editor | null {
     try {
-      const parsed = JSON.parse(json);
+      const parsed = JSON.parse(json) as unknown;
       const data = this.PARSER.parse(parsed);
       const editor = new Editor(data.state, data.undo, data.redo, false);
       return editor;
