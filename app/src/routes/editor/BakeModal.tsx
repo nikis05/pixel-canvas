@@ -119,7 +119,7 @@ const BakeForm: FC<{
 
       const payload = await editor.packForBaking(title.current, artist.current);
 
-      handle.setLocked(false);
+      handle.setLocked(true);
       try {
         await tonUI.sendTransaction(
           {
