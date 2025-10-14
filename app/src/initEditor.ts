@@ -13,13 +13,16 @@ export async function initEditor(
 ): Promise<Editor> {
   const useLocalStorage = import.meta.env.DEV;
 
-  console.log("Cloud storage availability:", { isCloudStorageAvail });
+  console.log("Fetching editor data");
 
   const editorData = useLocalStorage
     ? (localStorage.getItem(STORAGE_KEY) ?? "")
     : isCloudStorageAvail
       ? await getCloudStorageItem(STORAGE_KEY)
       : null;
+
+  console.log("Restoring editor");
+
   const restoredEditor =
     editorData !== null ? Editor.restore(editorData) : null;
   const editor = restoredEditor ?? Editor.empty();
