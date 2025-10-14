@@ -16,10 +16,12 @@ import { LuRedo2, LuUndo2 } from "react-icons/lu";
 import { UploadMenu } from "./UploadMenu";
 import { DownloadMenu } from "./DownloadMenu";
 import { confirmReplace } from "./replaceAlert";
-import { toVoid } from "@/utils/toVoid";
 import tonIcon from "./ton_symbol.svg";
 import { BakeModal } from "./BakeModal";
 import { useTonConnectModal, useTonConnectUI } from "@tonconnect/ui-react";
+import { openConnectModal } from "@/utils/openConnectModal";
+import { useIsMounted } from "usehooks-ts";
+import { captureException } from "@sentry/react";
 
 type Tool = "pencil" | "eraser";
 
@@ -68,13 +70,15 @@ export const EditorMenu: FC = () => {
     );
   }, [setCurrentColor, selectedTool, pickedColor]);
 
-  const onClear = useCallback(
-    toVoid(async () => {
+  const isMounted = useIsMounted();
+
+  const onClear = useCallback(() => {
+    (async () => {
       if (!(await confirmReplace(isEmpty))) return;
+      if (!isMounted()) return;
       clear();
-    }),
-    [confirmReplace, isEmpty, clear]
-  );
+    })().catch(captureException);
+  }, [isEmpty, isMounted, clear]);
 
   const renderPaletteIcon = useCallback(() => {
     const className = classNames(
@@ -104,7 +108,6 @@ export const EditorMenu: FC = () => {
   }, [paletteModal.isOpen, pickedColor, brushSize]);
 
   const [tonUI] = useTonConnectUI();
-
   const connectModal = useTonConnectModal();
   const bakeModal = useModal();
 
@@ -113,11 +116,13 @@ export const EditorMenu: FC = () => {
 
   const onBakeButtonClick = useCallback(() => {
     if (!tonUI.account) {
-      connectModal.open();
+      openConnectModal(tonUI, () => {
+        if (!isMounted()) bakeModal.open();
+      });
       return;
     }
     bakeModal.open();
-  }, [tonUI, connectModal, bakeModal]);
+  }, [isMounted, tonUI, bakeModal]);
 
   return (
     <>
@@ -160,7 +165,7 @@ export const EditorMenu: FC = () => {
           {
             key: "bake",
             renderIcon: renderTonIcon,
-            text: tonUI.account ? "Make NFT" : "Log in to make NFT",
+            text: "Make NFT",
             active: bakeButtonActive,
             primary: true,
             onClick: onBakeButtonClick,

@@ -10,6 +10,8 @@ import _ from "lodash";
 import { Banner } from "@/components/Banner";
 import { PurchaseExclusiveModal } from "./PurchaseExlusiveModal";
 import { useModal } from "@/components/Modal";
+import { captureException } from "@sentry/react";
+import { useIsMounted } from "usehooks-ts";
 
 type ExclusiveData = [ItemData, number];
 
@@ -24,10 +26,10 @@ export const Exclusives: FC = () => {
 
   const error = swr.error as unknown;
 
-  const items = data ?? [];
+  const items = useMemo(() => data ?? [], [data]);
 
   const onRefetchButtonClick = useCallback(() => {
-    void mutate();
+    mutate().catch(captureException);
   }, [mutate]);
 
   const [purchaseState, setPurchaseState] = useState<{
@@ -35,6 +37,8 @@ export const Exclusives: FC = () => {
     name: string;
     price: number;
   } | null>(null);
+
+  const purchaseModal = useModal();
 
   const purchaseables = useMemo(
     () =>
@@ -50,10 +54,15 @@ export const Exclusives: FC = () => {
           },
         ])
       ),
-    [items, setPurchaseState]
+    [items, setPurchaseState, purchaseModal]
   );
 
-  const purchaseModal = useModal();
+  const isMounted = useIsMounted();
+
+  const onPurchaseModalConnect = useCallback(() => {
+    if (!isMounted()) return;
+    purchaseModal.open();
+  }, [isMounted, purchaseModal]);
 
   return (
     <>
@@ -64,14 +73,18 @@ export const Exclusives: FC = () => {
               <Spinner size="l" />
             ) : (
               <Banner
-                title={error ? "Error loading exclusives" : "No exclusives"}
+                title={
+                  error !== undefined
+                    ? "Error loading exclusives"
+                    : "No exclusives"
+                }
                 description={
-                  error
+                  error !== undefined
                     ? "Failed to load exclusives"
                     : "There are no exclusives for sale at the moment"
                 }
                 button={
-                  error ? (
+                  error !== undefined ? (
                     <Button className="w-full" onClick={onRefetchButtonClick}>
                       Reload
                     </Button>
@@ -115,6 +128,7 @@ export const Exclusives: FC = () => {
       <PurchaseExclusiveModal
         handle={purchaseModal}
         purchaseable={purchaseState}
+        onConnect={onPurchaseModalConnect}
       />
     </>
   );

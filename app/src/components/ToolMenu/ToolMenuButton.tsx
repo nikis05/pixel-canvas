@@ -26,20 +26,24 @@ export const ToolMenuButton: FC<ToolMenuButtonProps> = (props) => {
     "items-center",
     "group",
     {
-      "w-7": !text,
-      "pl-2": !!text,
-      "pr-2": !!text,
-      "font-(--tgui--font_weight--accent2)": !!text,
-      "bg-(--tgui--secondary_fill)": primary || (active && !disabled),
-      "hover:bg-(--tgui--secondary_fill)": !primary && !active && !disabled,
-      "brightness-125": primary && active && !disabled,
-      "hover:brightness-125": primary && !active && !disabled,
+      "w-7": text == undefined,
+      "pl-2": text !== undefined,
+      "pr-2": text !== undefined,
+      "font-(--tgui--font_weight--accent2)": text !== undefined,
+      "bg-(--tgui--secondary_fill)": primary || (active && disabled !== true),
+      "hover:bg-(--tgui--secondary_fill)":
+        !primary && !active && disabled !== true,
+      "brightness-125": primary && active && disabled !== true,
+      "hover:brightness-125": primary && !active && disabled !== true,
     }
   );
 
   return (
-    <button className={className} onClick={disabled ? undefined : onClick}>
-      {disabled ? null : "Icon" in props ? (
+    <button
+      className={className}
+      onClick={disabled == true ? undefined : onClick}
+    >
+      {disabled == true ? null : "Icon" in props ? (
         <props.Icon
           className={
             active
@@ -50,7 +54,7 @@ export const ToolMenuButton: FC<ToolMenuButtonProps> = (props) => {
       ) : (
         props.renderIcon(active)
       )}
-      {text && <span className="ml-2">{text}</span>}
+      {text !== undefined && <span className="ml-2">{text}</span>}
     </button>
   );
 };

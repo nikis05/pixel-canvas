@@ -1,7 +1,8 @@
 import { Modal, ModalHandle } from "@/components/Modal";
 import { Section } from "@/components/Section";
 import { STORE_ADDRESS } from "@/index";
-import { toVoid } from "@/utils/toVoid";
+import { openConnectModal } from "@/utils/openConnectModal";
+import { captureException } from "@sentry/react";
 import { Button, Spinner } from "@telegram-apps/telegram-ui";
 import { fromNano } from "@ton/core";
 import { useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
@@ -11,11 +12,13 @@ import {
   BsExclamationCircleFill,
   BsGem,
 } from "react-icons/bs";
+import { useIsMounted } from "usehooks-ts";
 
 export const PurchaseExclusiveModal: FC<{
   handle: ModalHandle;
   purchaseable: { index: number; name: string; price: number } | null;
-}> = ({ handle, purchaseable }) => {
+  onConnect: () => void;
+}> = ({ handle, purchaseable, onConnect }) => {
   const price = purchaseable ? fromNano(purchaseable.price) : null;
   const [purchaseResult, setPurchaseResult] = useState<
     "success" | "error" | "loading" | null
@@ -29,12 +32,13 @@ export const PurchaseExclusiveModal: FC<{
 
   const [tonUI] = useTonConnectUI();
 
-  const onButtonClick = useCallback(
-    toVoid(async () => {
+  const isMounted = useIsMounted();
+  const onButtonClick = useCallback(() => {
+    (async () => {
       if (!purchaseable) return;
       if (!wallet) {
         handle.setOpen(false);
-        void tonUI.openModal();
+        openConnectModal(tonUI, onConnect);
         return;
       }
       setPurchaseResult("loading");
@@ -43,6 +47,7 @@ export const PurchaseExclusiveModal: FC<{
 
       const payload = wasm.pack_purchase_exclusive(purchaseable.index);
 
+      handle.setLocked(true);
       try {
         await tonUI.sendTransaction(
           {
@@ -57,13 +62,23 @@ export const PurchaseExclusiveModal: FC<{
           },
           { modals: ["before"] }
         );
+        if (!isMounted()) return;
         setPurchaseResult("success");
       } catch {
+        if (!isMounted()) return;
         setPurchaseResult("error");
       }
-    }),
-    [wallet, purchaseable, setPurchaseResult, tonUI]
-  );
+      handle.setLocked(false);
+    })().catch(captureException);
+  }, [
+    handle,
+    wallet,
+    onConnect,
+    tonUI,
+    purchaseable,
+    isMounted,
+    setPurchaseResult,
+  ]);
 
   return (
     <Modal handle={handle} srText="Purchase exclusive">

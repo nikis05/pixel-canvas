@@ -1,0 +1,47 @@
+TERMS OF SERVICE
+
+Last updated: 10.10.2025
+
+Please read these Terms of Service carefully before using this application. By accessing or using the application, you agree to be bound by these Terms. If you do not agree, do not use the application.
+
+1. USER RESPONSIBILITY AND INVESTMENT RISK
+
+All digital assets and transactions made using this application are at the user’s own risk. You are solely responsible for managing your digital assets and private keys. Any investment or purchase made using the application is done entirely at your own risk.
+
+Nothing in the Application or its documentation constitutes financial, legal, or investment advice. Users should conduct their own research and consult qualified professionals before making financial decisions.
+To the maximum extent permitted by law, the creators shall not be liable for any direct, indirect, incidental, or consequential damages arising from the use or inability to use the Application.
+
+2. DECENTRALIZED NATURE OF THE APPLICATION
+
+This application serves as an interface to smart contracts deployed on the TON blockchain. The application itself does not provide any paid services or hold user funds. All transactions occur directly on the TON blockchain network.
+
+3. SOFTWARE PROVIDED AS IS
+
+The software is provided “AS IS”, without any warranties or guarantees of any kind, whether express or implied. It is the user’s responsibility to review and research the open-source code before using the application. The creators are not responsible for any losses, damages, or other consequences arising from bugs, vulnerabilities, or other issues in the software or smart contracts.
+
+4. USER-GENERATED CONTENT
+
+Users may use the application to create custom image NFTs. You are solely responsible for ensuring that your content complies with all applicable laws, as well as Telegram Terms of Service, and does not contain illegal, explicit, or offensive material.
+Sending unsolicited explicit content to other users may constitute harassment in some jurisdictions, or break Telegram Terms of Service. The creators of the application are not liable for any content created or distributed by users.
+
+5. CONTENT MODERATION AND SERVICE REFUSAL
+
+The creators reserve the right to refuse hosting or other support services for NFTs that contain illegal, explicit, or otherwise offensive content.
+
+6. BLOCKCHAIN FEES
+
+All fees associated with interacting with the TON blockchain, including gas fees or contract invocation costs, are the responsibility of the user.
+
+7. INTELLECTUAL PROPERTY AND OWNERSHIP
+
+The Application itself, including its source code, trademarks, and branding, is owned or licensed by the creators.
+
+Users retain full ownership of the NFTs and media they create using the Application, subject to compliance with applicable laws and these Terms.
+
+By using the Application, users grant the creators a non-exclusive, worldwide, royalty-free license to use, display, reproduce, and distribute user-generated content for technical, operational, or promotional purposes related to the Application. This includes, but is not limited to, showcasing NFTs in galleries, previews, or marketing materials.
+
+This license does not affect the user’s ownership rights or ability to sell, transfer, or otherwise use their NFTs.
+
+8. UPDATES TO THOSE TERMS
+
+These Terms of Service may be updated at any time without prior notice. Any updated version will be posted online, and changes will take effect within three (3) business days after publication. Continued use of the application after such changes constitutes acceptance of the updated Terms.

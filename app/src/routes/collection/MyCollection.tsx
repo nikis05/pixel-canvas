@@ -7,6 +7,7 @@ import { Banner } from "@/components/Banner";
 import { Button, Spinner } from "@telegram-apps/telegram-ui";
 import { useNavigate } from "react-router-dom";
 import { ItemList } from "./ItemList";
+import { captureException } from "@sentry/react";
 
 export const MyCollection: FC<{ userAddress: string }> = ({ userAddress }) => {
   const swr = useSWRInfinite(
@@ -31,11 +32,14 @@ export const MyCollection: FC<{ userAddress: string }> = ({ userAddress }) => {
     [navigate]
   );
 
-  const onRefetchButtonClick = useCallback(() => void mutate(), [mutate]);
+  const onRefetchButtonClick = useCallback(
+    () => mutate().catch(captureException),
+    [mutate]
+  );
 
   const fetchMore = useCallback(() => {
-    if (swr.isValidating || swr.error) return;
-    void swr.setSize(swr.size + 1);
+    if (swr.isValidating || swr.error !== undefined) return;
+    swr.setSize(swr.size + 1).catch(captureException);
   }, [swr]);
 
   const hasNextPage = swr.data?.[swr.data?.length - 1].has_next_page ?? false;
@@ -46,14 +50,20 @@ export const MyCollection: FC<{ userAddress: string }> = ({ userAddress }) => {
         <Spinner size="l" />
       ) : (
         <Banner
-          title={error ? "Error loading NFTs" : "You have no NFTs yet"}
-          description={error ? "Failed to load NFTs" : "Create one now!"}
+          title={
+            error !== undefined ? "Error loading NFTs" : "You have no NFTs yet"
+          }
+          description={
+            error !== undefined ? "Failed to load NFTs" : "Create one now!"
+          }
           button={
             <Button
               className="w-full"
-              onClick={error ? onRefetchButtonClick : onCreateButtonClick}
+              onClick={
+                error !== undefined ? onRefetchButtonClick : onCreateButtonClick
+              }
             >
-              {error ? "Reload" : "Create an NFT"}
+              {error !== undefined ? "Reload" : "Create an NFT"}
             </Button>
           }
         />
@@ -63,7 +73,7 @@ export const MyCollection: FC<{ userAddress: string }> = ({ userAddress }) => {
     <ItemList
       items={items}
       loading={isValidating}
-      error={!!error}
+      error={error !== undefined}
       fetchMore={fetchMore}
       hasNextPage={hasNextPage}
     />

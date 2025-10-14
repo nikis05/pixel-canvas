@@ -1,6 +1,6 @@
 import { Section } from "@/components/Section";
 import { useEditor } from "@/model/editor/useEditor";
-import { toVoid } from "@/utils/toVoid";
+import { captureException } from "@sentry/react";
 import { Button, List, Snackbar, Spinner } from "@telegram-apps/telegram-ui";
 import { FC, useCallback, useState } from "react";
 import { BsClipboardFill, BsFileArrowDown, BsFileImage } from "react-icons/bs";
@@ -13,12 +13,14 @@ export const DownloadMenu: FC = () => {
   const [fileDownloading, setFileDownloading] = useState<boolean>(false);
 
   const onFileDownloadRequested = useCallback(
-    toVoid(async (upscale: boolean) => {
-      setFileDownloading(true);
-      await saveToFile(upscale);
-      if (!isMounted()) return;
-      setFileDownloading(false);
-    }),
+    (upscale: boolean) => {
+      (async () => {
+        setFileDownloading(true);
+        await saveToFile(upscale);
+        if (!isMounted()) return;
+        setFileDownloading(false);
+      })().catch(captureException);
+    },
     [setFileDownloading, saveToFile, isMounted]
   );
 
@@ -36,16 +38,15 @@ export const DownloadMenu: FC = () => {
   const [dnaCopiedSnackbarOpen, setDnaCopiedSnackbarOpen] =
     useState<boolean>(false);
 
-  const onCopyDna = useCallback(
-    toVoid(async () => {
+  const onCopyDna = useCallback(() => {
+    (async () => {
       setDnaCopying(true);
       await copyDna();
       if (!isMounted()) return;
       setDnaCopying(false);
       setDnaCopiedSnackbarOpen(true);
-    }),
-    [setDnaCopying, copyDna, isMounted]
-  );
+    })().catch(captureException);
+  }, [setDnaCopying, copyDna, isMounted]);
 
   const onDnaCopiedSnackbarClosed = useCallback(
     () => setDnaCopiedSnackbarOpen(false),

@@ -24,11 +24,11 @@ export const ItemList: FC<{
 
   useEffect(() => {
     if (!hasNextPage) return;
-    const [last] = virtualItems.slice(-1);
+    const last = virtualItems.at(virtualItems.length - 1);
     if (last && last.index >= rowsCount) {
       fetchMore();
     }
-  }, [virtualItems, rowsCount, fetchMore]);
+  }, [virtualItems, rowsCount, fetchMore, hasNextPage]);
 
   return (
     <div ref={parentRef} className="h-full w-full overflow-y-auto">

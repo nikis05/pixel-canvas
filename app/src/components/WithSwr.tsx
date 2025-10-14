@@ -1,3 +1,4 @@
+import { captureException } from "@sentry/react";
 import { Skeleton } from "@telegram-apps/telegram-ui";
 import React, { useCallback } from "react";
 import { SWRResponse } from "swr";
@@ -20,7 +21,7 @@ export function WithSwr<T, Props = object>({
   const onRefreshClick = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      void mutate();
+      mutate().catch(captureException);
     },
     [mutate]
   );

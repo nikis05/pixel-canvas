@@ -1,5 +1,7 @@
 {
-  "url": "https://ton.vote",
-  "name": "TON Vote",
-  "iconUrl": "https://ton.vote/logo.png"
+  "url": "https://nikis05.github.io/pixel-canvas",
+  "name": "Pixel Canvas",
+  "iconUrl": "https://nikis05.github.io/pixel-canvas/logo.png",
+  "termsOfUseUrl": "https://nikis05.github.io/pixel-canvas/tos.txt",
+  "privacyPolicyUrl": "https://nikis05.github.io/pixel-canvas/privacy.txt"
 }

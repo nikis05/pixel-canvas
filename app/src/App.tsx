@@ -4,9 +4,12 @@ import { FC, useMemo } from "react";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { routes } from "./routes";
 import { Nav } from "./components/Nav";
+import { TosModal } from "./components/TosModal";
+import { useModal } from "./components/Modal";
 
 export const App: FC = () => {
   const lp = useMemo(() => retrieveLaunchParams(), []);
+  const tosModal = useModal();
   return (
     <AppRoot
       appearance="dark"
@@ -22,6 +25,7 @@ export const App: FC = () => {
           </Routes>
         </Nav>
       </HashRouter>
+      <TosModal handle={tosModal} />
     </AppRoot>
   );
 };

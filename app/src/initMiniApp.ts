@@ -1,3 +1,4 @@
+import { captureException } from "@sentry/react";
 import {
   setDebug,
   mountBackButton,
@@ -20,7 +21,7 @@ export function init(): void {
   const launchParams = retrieveLaunchParams();
   const { tgWebAppPlatform: platform } = launchParams;
   const debug =
-    (launchParams.tgWebAppStartParam || "").includes("platformer_debug") ||
+    (launchParams.tgWebAppStartParam ?? "").includes("platformer_debug") ||
     import.meta.env.DEV;
 
   const eruda = debug && ["ios", "android"].includes(platform);
@@ -79,7 +80,9 @@ export function init(): void {
   }
 
   mountViewport.isAvailable() &&
-    void mountViewport().then(() => {
-      bindViewportCssVars();
-    });
+    mountViewport()
+      .then(() => {
+        bindViewportCssVars();
+      })
+      .catch(captureException);
 }

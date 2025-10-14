@@ -2,13 +2,27 @@ import { FC, PropsWithChildren, useMemo, useState } from "react";
 import { Modal as TgModal } from "@telegram-apps/telegram-ui";
 
 export class ModalHandle {
+  private locked: boolean = false;
+  private _setOpen: (open: boolean) => void;
+
   constructor(
     readonly isOpen: boolean,
-    readonly setOpen: (open: boolean) => void
-  ) {}
+    setOpen: (open: boolean) => void
+  ) {
+    this._setOpen = setOpen;
+  }
+
+  setOpen = (open: boolean): void => {
+    if (this.locked) return;
+    this._setOpen(open);
+  };
 
   open = () => {
     this.setOpen(true);
+  };
+
+  setLocked = (locked: boolean) => {
+    this.locked = locked;
   };
 }
 

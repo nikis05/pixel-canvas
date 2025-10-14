@@ -23,8 +23,8 @@ export const Nav: FC<PropsWithChildren> = ({ children }) => {
 
   return (
     <div className="h-screen">
-      <div className="h-[calc(100%_-_48px)]">{children}</div>
-      <TabbarUI className="h-[48px]">
+      <div className="h-[calc(100%_-_60px)]">{children}</div>
+      <TabbarUI className="h-[60px]">
         <TabbarUI.Item
           name="Feed"
           selected={isSelected("feed")}

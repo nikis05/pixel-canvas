@@ -1,0 +1,47 @@
+PRIVACY POLICY
+
+Last updated: 10.10.2025
+
+This Privacy Policy describes how we collect, use, and share information when you use this application. By using the application, you consent to the collection and use of your information in accordance with this policy.
+
+1. PUBLIC NATURE OF BLOCKCHAIN DATA
+
+All interactions with the TON blockchain — including but not limited to minting, purchases, transfers, and other smart contract operations — are recorded on a public ledger. This information is publicly accessible by anyone and cannot be altered or deleted. We do not control or restrict access to blockchain data.
+
+2. ADDITIONAL INFORMATION WE MAY COLLECT
+
+In addition to public blockchain data, we may collect certain identifying information to provide our services or for legitimate business purposes.
+This may include, but is not limited to:
+
+- Telegram usernames or handles
+
+- IP addresses
+
+- Phone numbers
+
+- Device and browser information
+
+- Usage statistics and analytics data
+
+Such information may be used to maintain and improve the service, enhance security, and support business purposes such as analytics, user experience improvement, and marketing campaigns.
+
+We retain collected information only for as long as necessary to fulfill the purposes outlined in this policy or as required by law.
+
+3. SHARING INFORMATION WITH THIRD PARTIES
+
+We may share collected information with third-party service providers, partners, or analytics tools only for the purposes listed in Section 2.
+We do not sell or rent personal information to unrelated third parties.
+
+4. LIABILITY AND USER RESPONSIBILITY
+
+We take reasonable steps to protect user information; however, we are not liable for any data leaks, losses, or unauthorized disclosures resulting from:
+
+- Violations of the Terms of Service
+
+- Irresponsible usage of the application (such as sharing private keys or sensitive data)
+
+- Bugs, vulnerabilities, or exploits in the open-source software or underlying blockchain protocols
+
+It is the user’s responsibility to research and understand the risks of using open-source and blockchain-based software before engaging with the application.
+
+By using this application, you acknowledge that you have read, understood, and agreed to this Privacy Policy.
