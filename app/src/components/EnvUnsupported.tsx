@@ -13,7 +13,7 @@ export const EnvUnsupported: FC = () => {
       const { bg_color: bgColor } = lp.tgWebAppThemeParams;
       return [
         lp.tgWebAppPlatform,
-        bgColor && isRGB(bgColor) ? isColorDark(bgColor) : false,
+        bgColor !== undefined && isRGB(bgColor) ? isColorDark(bgColor) : false,
       ];
     } catch {
       return ["android", false];

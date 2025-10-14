@@ -16,10 +16,11 @@ import { fromNano } from "@ton/core";
 import { Button, Input } from "@telegram-apps/telegram-ui";
 import tonIcon from "./ton_symbol.svg";
 import { useTonConnectUI } from "@tonconnect/ui-react";
-import { toVoid } from "@/utils/toVoid";
 import { useEditor } from "@/model/editor/useEditor";
 import { BsCheckCircleFill, BsExclamationCircleFill } from "react-icons/bs";
 import { tryFetch } from "@/utils/tryFetch";
+import { useIsMounted } from "usehooks-ts";
+import { captureException } from "@sentry/react";
 
 export const BakeModal: FC<{
   handle: ModalHandle;
@@ -37,14 +38,19 @@ export const BakeModal: FC<{
 
   useEffect(() => {
     setBakeResult(null);
-    void itemPrice.mutate();
-  }, [handle.isOpen]);
+    itemPrice.mutate().catch(captureException);
+  }, [handle.isOpen, itemPrice]);
 
+  const isMounted = useIsMounted();
   const withSwrProps = useMemo(
     () => ({
-      onComplete: setBakeResult,
+      onComplete: (error: boolean) => {
+        if (!isMounted()) return;
+        setBakeResult(error);
+      },
+      handle,
     }),
-    [setBakeResult]
+    [isMounted, setBakeResult, handle]
   );
 
   return (
@@ -83,8 +89,9 @@ function renderSectionIcon(): React.ReactNode {
 const BakeForm: FC<{
   data: number | null;
   onComplete: (error: boolean) => void;
-}> = ({ data, onComplete }) => {
-  const price = data ? fromNano(data) : "";
+  handle: ModalHandle;
+}> = ({ data, onComplete, handle }) => {
+  const price = data != null ? fromNano(data) : "";
   const editor = useEditor();
 
   const [tonUI] = useTonConnectUI();
@@ -107,12 +114,13 @@ const BakeForm: FC<{
     [artist]
   );
 
-  const onButtonClick = useCallback(
-    toVoid(async () => {
+  const onButtonClick = useCallback(() => {
+    (async () => {
       if (!tonUI.account) return;
 
       const payload = await editor.packForBaking(title.current, artist.current);
 
+      handle.setLocked(false);
       try {
         await tonUI.sendTransaction(
           {
@@ -120,7 +128,7 @@ const BakeForm: FC<{
             messages: [
               {
                 address: STORE_ADDRESS,
-                amount: data ? data.toString() : "",
+                amount: data != null ? data.toString() : "",
                 payload,
               },
             ],
@@ -130,11 +138,10 @@ const BakeForm: FC<{
       } catch {
         onComplete(true);
       }
-
       onComplete(false);
-    }),
-    [tonUI, title, data, artist, onComplete]
-  );
+      handle.setLocked(false);
+    })().catch(captureException);
+  }, [tonUI, title, data, artist, onComplete, editor, handle]);
 
   return (
     <Section

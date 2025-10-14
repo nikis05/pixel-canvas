@@ -8,13 +8,13 @@ export const BrushPicker: FC<{
   color: Color;
   onColorChange: (value: Color) => void;
 }> = ({ brushSize, onBrushSizeChange, color, onColorChange }) => {
-  const palette = useMemo(() => Color.palette(), [Color]);
+  const palette = useMemo(() => Color.palette(), []);
 
   const brushSizes = useMemo(() => Array.from({ length: 8 }, (_, i) => i), []);
 
   const onBrushClick = useMemo(
     () => brushSizes.map((brushSize) => () => onBrushSizeChange(brushSize)),
-    [brushSizes]
+    [brushSizes, onBrushSizeChange]
   );
 
   const onColorClick = useMemo(

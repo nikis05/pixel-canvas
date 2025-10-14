@@ -1,21 +1,41 @@
 import { debounceTime } from "rxjs";
 import { Editor } from "./model/editor";
+import { captureException } from "@sentry/react";
+import {
+  getCloudStorageItem,
+  setCloudStorageItem,
+} from "@telegram-apps/sdk-react";
 
-export function initEditor(): Editor {
-  const editorData = localStorage.getItem("@pixel-canvas/editor");
-  const restoredEditor = editorData ? Editor.restore(editorData) : null;
+const STORAGE_KEY = "@pixel-canvas/editor";
+
+export async function initEditor(): Promise<Editor> {
+  const useLocalStorage = import.meta.env.DEV;
+
+  const editorData = useLocalStorage
+    ? (localStorage.getItem(STORAGE_KEY) ?? "")
+    : getCloudStorageItem.isAvailable()
+      ? await getCloudStorageItem(STORAGE_KEY)
+      : null;
+  const restoredEditor =
+    editorData !== null ? Editor.restore(editorData) : null;
   const editor = restoredEditor ?? Editor.empty();
 
-  const backup = () => backupEditor(editor);
+  const backup = useLocalStorage
+    ? (editor: Editor) => localStorage.setItem(STORAGE_KEY, editor.save())
+    : (editor: Editor) => {
+        if (setCloudStorageItem.isAvailable()) {
+          setCloudStorageItem(STORAGE_KEY, editor.save()).catch(
+            captureException
+          );
+        }
+      };
 
-  void editor.stateObservable.pipe(debounceTime(3000)).forEach(backup);
+  editor.editorObservable
+    .pipe(debounceTime(3000))
+    .forEach(backup)
+    .catch(captureException);
 
-  window.addEventListener("beforeunload", backup);
+  window.addEventListener("beforeunload", () => backup(editor));
 
   return editor;
-}
-
-function backupEditor(editor: Editor) {
-  const editorData = editor.save();
-  localStorage.setItem("@pixel-canvas/editor", editorData);
 }

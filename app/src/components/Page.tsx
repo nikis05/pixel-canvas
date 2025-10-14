@@ -23,7 +23,7 @@ export function Page({
       return;
     }
     hideBackButton();
-  }, [back]);
+  }, [back, navigate]);
 
   return <>{children}</>;
 }

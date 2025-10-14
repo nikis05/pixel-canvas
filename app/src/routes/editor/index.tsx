@@ -8,7 +8,7 @@ export const Editor: FC = () => {
     <Page back={false}>
       <div className="h-full flex flex-col">
         <EditorMenu />
-        <div className="flex-1 flex justify-center items-center">
+        <div className="flex-1 flex min-h-0 justify-center items-center">
           <Canvas />
         </div>
       </div>

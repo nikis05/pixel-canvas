@@ -25,7 +25,7 @@ export const Item: FC<{
           {fromNano(purchaseable.price)}
         </CardChip>
       )}
-      {imageUrl ? (
+      {imageUrl !== null ? (
         <img className="w-full aspect-square" src={imageUrl} />
       ) : (
         <Skeleton visible={true}>

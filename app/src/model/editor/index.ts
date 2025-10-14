@@ -92,6 +92,7 @@ export type LoadFromFileStatus = ParseImageResponse["status"];
 export class Editor {
   private _stateObservable = new Subject<StateSnapshot>();
   private _allowedActionsObservable = new Subject<AllowedActions>();
+  private _observable = new Subject<Editor>();
   private inProgressEdit: { edit: Edit; touchedPoints: Set<string> } | null =
     null;
 
@@ -108,6 +109,10 @@ export class Editor {
 
   get allowedActionsObservable(): Observable<AllowedActions> {
     return this._allowedActionsObservable;
+  }
+
+  get editorObservable(): Observable<Editor> {
+    return this._observable;
   }
 
   get isEmpty(): boolean {
@@ -167,6 +172,7 @@ export class Editor {
     this.undoStack.push(this.inProgressEdit.edit);
     this.inProgressEdit = null;
     this.notifyAllowedActions();
+    this.notifyEditor();
   }
 
   undo() {
@@ -180,6 +186,7 @@ export class Editor {
     this.redoStack.push(edit);
     this.notifyState();
     this.notifyAllowedActions();
+    this.notifyEditor();
   }
 
   redo() {
@@ -193,20 +200,21 @@ export class Editor {
     this.undoStack.push(edit);
     this.notifyState();
     this.notifyAllowedActions();
+    this.notifyEditor();
   }
 
   save(): string {
     const denormalize = (
       normalized: Edit[]
-    ): z.infer<typeof Editor.PARSER>["undo" | "redo"] => {
+    ): z.input<typeof Editor.PARSER>["undo" | "redo"] => {
       return normalized.map((normalized) => ({
-        from: Array.from(normalized.from),
-        to: normalized.to,
+        from: normalized.from.map(([point, color]) => [point, color.value]),
+        to: normalized.to.value,
       }));
     };
 
-    const denormalized: z.infer<typeof Editor.PARSER> = {
-      state: this.state,
+    const denormalized: z.input<typeof Editor.PARSER> = {
+      state: this.state.snapshot().toData(),
       undo: denormalize(this.undoStack),
       redo: denormalize(this.redoStack),
     };
@@ -265,10 +273,12 @@ export class Editor {
 
   static restore(json: string): Editor | null {
     try {
-      const data = this.PARSER.parse(json);
+      const parsed = JSON.parse(json) as unknown;
+      const data = this.PARSER.parse(parsed);
       const editor = new Editor(data.state, data.undo, data.redo, false);
       return editor;
-    } catch {
+    } catch (e) {
+      console.log("failed to restore", e);
       return null;
     }
   }
@@ -286,6 +296,7 @@ export class Editor {
     this.state = state;
     this.notifyState();
     this.notifyAllowedActions();
+    this.notifyEditor();
   }
 
   private notifyAllowedActions() {
@@ -294,6 +305,10 @@ export class Editor {
 
   private notifyState() {
     this._stateObservable.next(this.state.snapshot());
+  }
+
+  private notifyEditor() {
+    this._observable.next(this);
   }
 
   private static PARSER = (() => {

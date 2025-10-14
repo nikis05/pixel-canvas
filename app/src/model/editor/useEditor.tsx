@@ -73,7 +73,7 @@ export const EditorProvider: FC<PropsWithChildren<{ editor: Editor }>> = ({
       editorState,
       brushSize: brushSizeRef,
     }),
-    [editor, isDrawing, editorState, brushSizeRef]
+    [isDrawing, editorState, brushSizeRef]
   );
 
   return (
@@ -146,7 +146,7 @@ export function useEditor(): UseEditorOutput {
   const copyDna = useCallback(async () => {
     const dna = await editor.current.getDna();
     await copyTextToClipboard(dna);
-  }, [editor, navigator]);
+  }, [editor]);
 
   const loadFromDna = useCallback(
     (dna: string) => editor.current.loadFromDna(dna),

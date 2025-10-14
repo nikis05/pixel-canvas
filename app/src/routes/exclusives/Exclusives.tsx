@@ -6,10 +6,11 @@ import { FC, useCallback, useMemo, useState } from "react";
 import useSWR from "swr";
 import { Item } from "../collection/Item";
 import { Button, Spinner } from "@telegram-apps/telegram-ui";
-import _ from "lodash";
 import { Banner } from "@/components/Banner";
 import { PurchaseExclusiveModal } from "./PurchaseExlusiveModal";
 import { useModal } from "@/components/Modal";
+import { captureException } from "@sentry/react";
+import { useIsMounted } from "usehooks-ts";
 
 type ExclusiveData = [ItemData, number];
 
@@ -24,10 +25,10 @@ export const Exclusives: FC = () => {
 
   const error = swr.error as unknown;
 
-  const items = data ?? [];
+  const items = useMemo(() => data ?? [], [data]);
 
   const onRefetchButtonClick = useCallback(() => {
-    void mutate();
+    mutate().catch(captureException);
   }, [mutate]);
 
   const [purchaseState, setPurchaseState] = useState<{
@@ -35,6 +36,8 @@ export const Exclusives: FC = () => {
     name: string;
     price: number;
   } | null>(null);
+
+  const purchaseModal = useModal();
 
   const purchaseables = useMemo(
     () =>
@@ -50,10 +53,15 @@ export const Exclusives: FC = () => {
           },
         ])
       ),
-    [items, setPurchaseState]
+    [items, setPurchaseState, purchaseModal]
   );
 
-  const purchaseModal = useModal();
+  const isMounted = useIsMounted();
+
+  const onPurchaseModalConnect = useCallback(() => {
+    if (!isMounted()) return;
+    purchaseModal.open();
+  }, [isMounted, purchaseModal]);
 
   return (
     <>
@@ -64,14 +72,18 @@ export const Exclusives: FC = () => {
               <Spinner size="l" />
             ) : (
               <Banner
-                title={error ? "Error loading exclusives" : "No exclusives"}
+                title={
+                  error !== undefined
+                    ? "Error loading exclusives"
+                    : "No exclusives"
+                }
                 description={
-                  error
+                  error !== undefined
                     ? "Failed to load exclusives"
                     : "There are no exclusives for sale at the moment"
                 }
                 button={
-                  error ? (
+                  error !== undefined ? (
                     <Button className="w-full" onClick={onRefetchButtonClick}>
                       Reload
                     </Button>
@@ -81,31 +93,17 @@ export const Exclusives: FC = () => {
             )}
           </div>
         ) : (
-          <div className="h-full w-full overflow-y-auto">
-            {_.chunk(items, 2).map((row) => {
-              const sortedRow = [...row].sort(
-                (a, b) => a[0].index - b[0].index
-              );
-              const item1 = sortedRow[0][0];
-              const item2 = sortedRow.at(1)?.[0];
+          <div className="w-full overflow-y-auto flex justify-center">
+            {items.map(([item]) => {
               return (
-                <div key={item1.index} className="flex justify-center">
-                  <div className="p-5 w-[min(100%,_280px)]">
-                    <Item
-                      data={item1}
-                      purchaseable={purchaseables.get(item1.index)}
-                    />
-                  </div>
-                  <div className="p-5 w-[min(100%,_280px)]">
-                    {item2 ? (
-                      <Item
-                        data={item2}
-                        purchaseable={purchaseables.get(item2.index)}
-                      />
-                    ) : (
-                      <div className="w-65" />
-                    )}
-                  </div>
+                <div
+                  key={item.index}
+                  className="w-[min(100%,_280px)] p-5 flex justify-center"
+                >
+                  <Item
+                    data={item}
+                    purchaseable={purchaseables.get(item.index)}
+                  />
                 </div>
               );
             })}
@@ -115,6 +113,7 @@ export const Exclusives: FC = () => {
       <PurchaseExclusiveModal
         handle={purchaseModal}
         purchaseable={purchaseState}
+        onConnect={onPurchaseModalConnect}
       />
     </>
   );

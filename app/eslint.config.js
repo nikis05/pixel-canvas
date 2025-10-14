@@ -33,5 +33,7 @@ export default tseslint.config({
   },
   rules: {
     "@typescript-eslint/no-unused-expressions": 0,
+    "@typescript-eslint/strict-boolean-expressions": "error",
+    "react-hooks/exhaustive-deps": "error",
   },
 });
