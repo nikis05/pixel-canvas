@@ -98,14 +98,14 @@ export const PurchaseExclusiveModal: FC<{
         ) : purchaseable ? (
           <Section
             Icon={BsGem}
-            title="Create your NFT"
+            title="Purchase exclusive"
             description={
               <div className="mb-6">
                 <div>
                   You are about to purchase an exlusive pixel-art NFT:{" "}
                   {purchaseable.name}
                 </div>
-                <div className="mb-4">Current price: {price}ton</div>
+                <div className="mb-4">Current price: {price} ton</div>
                 {purchaseResult == null ? (
                   <Button onClick={onButtonClick}>
                     Buy exclusive ({price}ton)
