@@ -39,24 +39,22 @@ export const App: FC = () => {
         acceptedTosVersion: version ?? "",
         editorData,
       });
+    } else if (isCloudStorageAvailable) {
+      Promise.all([
+        getCloudStorageItem(TOS_STORAGE_KEY, { timeout: 2000 }),
+        getCloudStorageItem(EDITOR_STORAGE_KEY, { timeout: 2000 }),
+      ])
+        .then(([version, editorData]) => {
+          if (isMounted())
+            setCloudStorageData({
+              available: true,
+              acceptedTosVersion: version,
+              editorData: editorData === "" ? null : editorData,
+            });
+        })
+        .catch(captureException);
     } else {
-      if (isCloudStorageAvailable) {
-        Promise.all([
-          getCloudStorageItem(TOS_STORAGE_KEY, { timeout: 2000 }),
-          getCloudStorageItem(EDITOR_STORAGE_KEY, { timeout: 2000 }),
-        ])
-          .then(([version, editorData]) => {
-            if (isMounted())
-              setCloudStorageData({
-                available: true,
-                acceptedTosVersion: version,
-                editorData: editorData === "" ? null : editorData,
-              });
-          })
-          .catch(captureException);
-      } else {
-        setCloudStorageData({ available: false });
-      }
+      setCloudStorageData({ available: false });
     }
   }, [setCloudStorageData, isCloudStorageAvailable, isMounted]);
 
