@@ -2,6 +2,10 @@ use tonlib_core::{TonAddress, cell::CellBuilder, tlb_types::tlb::TLB};
 
 use crate::dna::Dna;
 
+pub fn pack_dna(dna: &Dna) -> String {
+    dna.to_cell().to_boc_b64(true).unwrap()
+}
+
 pub fn pack_bake(title: &str, artist: &str, dna: &Dna) -> String {
     let mut message = CellBuilder::new();
     message.store_u32(32, 0xf0f7_c18a).unwrap();
