@@ -27,7 +27,7 @@ export function getDeviceStorageKey(key: string): Promise<string | null> {
       rej(new Error("Timeout exceeded"));
     }, 2000);
 
-    const cancel3 = () => timeout.close();
+    const cancel3 = () => clearTimeout(timeout);
 
     postEvent("web_app_device_storage_get_key", {
       req_id: reqId,
