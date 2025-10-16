@@ -59,8 +59,7 @@ export const Exclusives: FC = () => {
   const isMounted = useIsMounted();
 
   const onPurchaseModalConnect = useCallback(() => {
-    if (!isMounted()) return;
-    purchaseModal.open();
+    if (isMounted()) purchaseModal.open();
   }, [isMounted, purchaseModal]);
 
   return (
