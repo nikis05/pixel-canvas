@@ -31,9 +31,9 @@ export const TosModal: FC<TosModalProps> = ({ acceptedTosVersion }) => {
   const onButtonClick = useCallback(() => {
     if (import.meta.env.DEV) {
       localStorage.setItem(TOS_STORAGE_KEY, TOS_VERSION);
+    } else {
+      trySetDeviceStorageKey(TOS_STORAGE_KEY, TOS_VERSION);
     }
-
-    trySetDeviceStorageKey(TOS_STORAGE_KEY, TOS_VERSION);
 
     handle.setLocked(false);
     handle.setOpen(false);
