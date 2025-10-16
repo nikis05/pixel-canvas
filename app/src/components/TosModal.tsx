@@ -7,7 +7,7 @@ import { Button } from "@telegram-apps/telegram-ui";
 import { TOS_STORAGE_KEY } from "@/App";
 import { trySetDeviceStorageKey } from "@/utils/deviceStorage";
 
-const TOS_VERSION = "1";
+const TOS_VERSION = "2";
 
 export type TosModalProps = {
   acceptedTosVersion:
