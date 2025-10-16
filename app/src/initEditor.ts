@@ -1,8 +1,8 @@
 import { debounceTime } from "rxjs";
 import { Editor } from "./model/editor";
 import { captureException } from "@sentry/react";
-import { setCloudStorageItem } from "@telegram-apps/sdk-react";
 import { EDITOR_STORAGE_KEY } from "./App";
+import { trySetDeviceStorageKey } from "./utils/deviceStorage";
 
 export function initEditor(editorData: string | null): Editor {
   const useLocalStorage = import.meta.env.DEV;
@@ -15,11 +15,7 @@ export function initEditor(editorData: string | null): Editor {
     ? (editor: Editor) =>
         localStorage.setItem(EDITOR_STORAGE_KEY, editor.save())
     : (editor: Editor) => {
-        if (setCloudStorageItem.isAvailable()) {
-          setCloudStorageItem(EDITOR_STORAGE_KEY, editor.save()).catch(
-            captureException
-          );
-        }
+        trySetDeviceStorageKey(EDITOR_STORAGE_KEY, editor.save());
       };
 
   editor.editorObservable

@@ -1,7 +1,4 @@
-import {
-  getCloudStorageItem,
-  retrieveLaunchParams,
-} from "@telegram-apps/sdk-react";
+import { retrieveLaunchParams } from "@telegram-apps/sdk-react";
 import { AppRoot, Spinner } from "@telegram-apps/telegram-ui";
 import { FC, useEffect, useMemo, useState } from "react";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
@@ -9,10 +6,10 @@ import { routes } from "./routes";
 import { Nav } from "./components/Nav";
 import { TosModal } from "./components/TosModal";
 import { useIsMounted } from "usehooks-ts";
-import { captureException } from "@sentry/react";
 import { initEditor } from "./initEditor";
 import { Editor } from "./model/editor";
 import { EditorProvider } from "./model/editor/useEditor";
+import { getDeviceStorageKey } from "./utils/deviceStorage";
 
 export const TOS_STORAGE_KEY = "@pixel-canvas/tos";
 export const EDITOR_STORAGE_KEY = "@pixel-canvas/editor";
@@ -20,13 +17,15 @@ export const EDITOR_STORAGE_KEY = "@pixel-canvas/editor";
 export const App: FC = () => {
   const lp = useMemo(() => retrieveLaunchParams(), []);
 
-  const isCloudStorageAvailable = getCloudStorageItem.isAvailable();
-
   const isMounted = useIsMounted();
 
-  const [cloudStorageData, setCloudStorageData] = useState<
+  const [storageData, setStorageData] = useState<
     | { available: false }
-    | { available: true; acceptedTosVersion: string; editorData: string | null }
+    | {
+        available: true;
+        acceptedTosVersion: string | null;
+        editorData: string | null;
+      }
     | null
   >(null);
 
@@ -34,44 +33,44 @@ export const App: FC = () => {
     if (import.meta.env.DEV) {
       const version = localStorage.getItem(TOS_STORAGE_KEY);
       const editorData = localStorage.getItem(EDITOR_STORAGE_KEY);
-      setCloudStorageData({
+      setStorageData({
         available: true,
-        acceptedTosVersion: version ?? "",
+        acceptedTosVersion: version,
         editorData,
       });
-    } else if (isCloudStorageAvailable) {
+    } else {
       Promise.all([
-        getCloudStorageItem(TOS_STORAGE_KEY, { timeout: 2000 }),
-        getCloudStorageItem(EDITOR_STORAGE_KEY, { timeout: 2000 }),
+        getDeviceStorageKey(TOS_STORAGE_KEY),
+        getDeviceStorageKey(EDITOR_STORAGE_KEY),
       ])
         .then(([version, editorData]) => {
           if (isMounted())
-            setCloudStorageData({
+            setStorageData({
               available: true,
               acceptedTosVersion: version,
-              editorData: editorData === "" ? null : editorData,
+              editorData: editorData,
             });
         })
-        .catch(captureException);
-    } else {
-      setCloudStorageData({ available: false });
+        .catch(() => {
+          if (isMounted()) setStorageData({ available: false });
+        });
     }
-  }, [setCloudStorageData, isCloudStorageAvailable, isMounted]);
+  }, [setStorageData, isMounted]);
 
   const editor = useMemo<Editor | null>(() => {
-    if (cloudStorageData == null) return null;
+    if (storageData == null) return null;
     const editor = initEditor(
-      cloudStorageData.available ? cloudStorageData.editorData : null
+      storageData.available ? storageData.editorData : null
     );
     return editor;
-  }, [cloudStorageData]);
+  }, [storageData]);
 
   return (
     <AppRoot
       appearance="dark"
       platform={["macos", "ios"].includes(lp.tgWebAppPlatform) ? "ios" : "base"}
     >
-      {cloudStorageData != null && editor != null ? (
+      {storageData != null && editor != null ? (
         <>
           <HashRouter>
             <EditorProvider editor={editor}>
@@ -87,10 +86,10 @@ export const App: FC = () => {
           </HashRouter>
           <TosModal
             acceptedTosVersion={
-              cloudStorageData.available
+              storageData.available
                 ? {
                     available: true,
-                    version: cloudStorageData.acceptedTosVersion,
+                    version: storageData.acceptedTosVersion,
                   }
                 : { available: false }
             }

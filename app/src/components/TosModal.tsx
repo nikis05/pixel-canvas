@@ -4,16 +4,15 @@ import { Section } from "./Section";
 import { BsFileText } from "react-icons/bs";
 import { Link } from "./Link";
 import { Button } from "@telegram-apps/telegram-ui";
-import { setCloudStorageItem } from "@telegram-apps/sdk-react";
-import { captureException } from "@sentry/react";
 import { TOS_STORAGE_KEY } from "@/App";
+import { trySetDeviceStorageKey } from "@/utils/deviceStorage";
 
 const TOS_VERSION = "1";
 
 export type TosModalProps = {
   acceptedTosVersion:
     | { available: false }
-    | { available: true; version: string };
+    | { available: true; version: string | null };
 };
 
 export const TosModal: FC<TosModalProps> = ({ acceptedTosVersion }) => {
@@ -33,9 +32,9 @@ export const TosModal: FC<TosModalProps> = ({ acceptedTosVersion }) => {
     if (import.meta.env.DEV) {
       localStorage.setItem(TOS_STORAGE_KEY, TOS_VERSION);
     }
-    if (setCloudStorageItem.isAvailable()) {
-      setCloudStorageItem(TOS_STORAGE_KEY, TOS_VERSION).catch(captureException);
-    }
+
+    trySetDeviceStorageKey(TOS_STORAGE_KEY, TOS_VERSION);
+
     handle.setLocked(false);
     handle.setOpen(false);
   }, [handle]);
