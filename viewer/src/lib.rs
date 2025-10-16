@@ -196,7 +196,7 @@ impl Viewer {
             page: Option<usize>,
         }
 
-        const PAGE_SIZE: usize = 4;
+        const PAGE_SIZE: usize = 10;
 
         impl Task for GetItems {
             type Output = NftItemsResponse;

@@ -87,7 +87,7 @@ export const PurchaseExclusiveModal: FC<{
           <Section
             Icon={BsCheckCircleFill}
             title="Purchase is cheduled"
-            description="The transaction has been started. You should receive it in your wallet shortly. If there is an error, you will be refunded"
+            description="The transaction has been scheduled. You should receive the NFT in your wallet shortly. If there is an error, you will be refunded"
           />
         ) : purchaseResult == "error" ? (
           <Section
