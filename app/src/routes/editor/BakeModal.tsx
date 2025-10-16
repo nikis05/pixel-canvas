@@ -25,14 +25,13 @@ import { captureException } from "@sentry/react";
 export const BakeModal: FC<{
   handle: ModalHandle;
 }> = ({ handle }) => {
-  const itemPrice = useSWR(
-    "item_price",
-    () =>
-      tryFetch(`${API_URL}/item_price`)
-        .then((resp) => resp.text())
-        .then((text) => parseInt(text, 10)),
-    { revalidateOnMount: false }
+  const itemPrice = useSWR("item_price", () =>
+    tryFetch(`${API_URL}/item_price`)
+      .then((resp) => resp.text())
+      .then((text) => parseInt(text, 10))
   );
+
+  console.log({ itemPrice });
 
   const [bakeResult, setBakeResult] = useState<boolean | null>(null);
 
