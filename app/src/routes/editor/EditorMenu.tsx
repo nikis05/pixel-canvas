@@ -117,7 +117,7 @@ export const EditorMenu: FC = React.memo(() => {
   const onBakeButtonClick = useCallback(() => {
     if (!tonUI.account) {
       openConnectModal(tonUI, () => {
-        if (!isMounted()) bakeModal.open();
+        if (isMounted()) bakeModal.open();
       });
       return;
     }
