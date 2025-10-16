@@ -13,6 +13,9 @@ import { Address } from "@ton/core";
 import { IoLogOut } from "react-icons/io5";
 import { captureException } from "@sentry/react";
 import { showPopup } from "@telegram-apps/sdk-react";
+import { BsQuestionCircle } from "react-icons/bs";
+import { useModal } from "@/components/Modal";
+import { InfoModal } from "./InfoModal";
 
 export const Collection: FC = () => {
   const [openTab, setOpenTab] = useState<"collection" | "sales" | "favorites">(
@@ -53,6 +56,8 @@ export const Collection: FC = () => {
     })().catch(captureException);
   }, [tonUI]);
 
+  const infoModal = useModal();
+
   return (
     <Page back={false}>
       <div className="h-full flex flex-col">
@@ -77,13 +82,20 @@ export const Collection: FC = () => {
               Favorites
             </SegmentedControl.Item>
           </SegmentedControl>
-          {wallet != null && (
-            <div className="flex items-center ml-2">
-              <IconButton size="l" onClick={onDisconnectButtonClick}>
-                <IoLogOut />
+          <div className="flex items-center ml-2">
+            <div>
+              <IconButton size="l" onClick={infoModal.open}>
+                <BsQuestionCircle />
               </IconButton>
             </div>
-          )}
+            {wallet != null && (
+              <div className="ml-2">
+                <IconButton size="l" onClick={onDisconnectButtonClick}>
+                  <IoLogOut />
+                </IconButton>
+              </div>
+            )}
+          </div>
         </div>
         {openTab == "collection" &&
           (wallet != null ? (
@@ -111,6 +123,7 @@ export const Collection: FC = () => {
           </div>
         )}
       </div>
+      <InfoModal handle={infoModal} />
     </Page>
   );
 };
