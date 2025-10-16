@@ -77,6 +77,16 @@ pub fn encode_dna(#[wasm_bindgen(unchecked_param_type = "number[][]")] data: Arr
 
 #[wasm_bindgen]
 #[allow(clippy::must_use_candidate, clippy::needless_pass_by_value)]
+pub fn pack_dna(#[wasm_bindgen(unchecked_param_type = "number[][]")] data: Array) -> String {
+    let data = data_from_js(&data);
+
+    let dna = Dna::from_data(data);
+
+    pack::pack_dna(&dna)
+}
+
+#[wasm_bindgen]
+#[allow(clippy::must_use_candidate, clippy::needless_pass_by_value)]
 pub fn pack_bake(
     title: String,
     artist: String,
