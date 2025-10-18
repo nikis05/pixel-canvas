@@ -1,6 +1,6 @@
 import { NetworkProvider } from '@ton/blueprint';
+import { toNano } from '@ton/core';
 import { Store } from '../build/Store/Store_Store';
-import { Cell, toNano } from '@ton/core';
 
 export async function run(provider: NetworkProvider) {
     const ui = provider.ui();
@@ -19,7 +19,7 @@ export async function run(provider: NetworkProvider) {
         {
             value: toNano('0.1'),
         },
-        'Stop',
+        'Resume',
     );
 
     await provider.waitForLastTransaction();

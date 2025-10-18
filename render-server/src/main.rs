@@ -78,7 +78,7 @@ async fn main() {
         .route(
             "/img/{item_index}",
             routing::get({
-                async move |item_index: extract::Path<u32>| {
+                async move |item_index: extract::Path<u64>| {
                     let item_index = item_index.0;
                     let item_address = item_address(&env.collection_address, item_index);
                     let raw_dna = match viewer.get_dna(item_address).await {
