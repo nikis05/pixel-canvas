@@ -6,7 +6,7 @@ use tonlib_core::{TonAddress, cell::ArcCell, tlb_types::tlb::TLB};
 static CODE: LazyLock<ArcCell> =
     LazyLock::new(|| ArcCell::from_boc_b64(include_str!("../item_code.base64")).unwrap());
 
-pub fn item_address(collection_address: &str, index: u32) -> TonAddress {
+pub fn item_address(collection_address: &str, index: u64) -> TonAddress {
     let mut data = tonlib_core::cell::CellBuilder::new();
     data.store_bit(false).unwrap();
     data.store_address(

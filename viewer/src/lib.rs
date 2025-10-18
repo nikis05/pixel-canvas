@@ -34,7 +34,7 @@ pub struct NftItemsResponse {
 
 #[derive(Serialize)]
 pub struct NftItem {
-    pub index: u32,
+    pub index: u64,
     pub name: String,
     pub description: String,
 }
@@ -43,7 +43,7 @@ impl Viewer {
     pub fn new(api_url: String, api_key: Option<String>) -> Self {
         #[derive(Deserialize)]
         struct Payload {
-            code: Option<u32>,
+            code: Option<u64>,
         }
 
         let (queue, mut rx) = mpsc::channel::<Job>(10);
@@ -250,7 +250,7 @@ impl Viewer {
                     .take(PAGE_SIZE)
                     .map(|item| {
                         Ok::<_, anyhow::Error>(NftItem {
-                            index: item.index.parse::<u32>().map_err(|_| {
+                            index: item.index.parse::<u64>().map_err(|_| {
                                 anyhow::Error::msg(format!("invalid item index: {}", item.index))
                             })?,
                             name: item.content.name,
@@ -278,13 +278,13 @@ impl Viewer {
         &self,
         collection_address: TonAddress,
         store_address: TonAddress,
-    ) -> ViewerResult<Vec<(NftItem, u32)>> {
+    ) -> ViewerResult<Vec<(NftItem, u64)>> {
         struct GetExclusivesOffered {
             store_address: TonAddress,
         }
 
         impl Task for GetExclusivesOffered {
-            type Output = HashMap<u32, u32>;
+            type Output = HashMap<u64, u64>;
 
             fn job_payload(&self) -> ((reqwest::Method, &'static str), serde_json::Value) {
                 let store_address = self.store_address.to_string();
@@ -336,11 +336,11 @@ impl Viewer {
                         parser.load_dict_data(
                             32,
                             |int| {
-                                u32::try_from(int)
+                                u64::try_from(int)
                                     .map_err(|err| TonCellError::InvalidInput(err.to_string()))
                             },
                             |val| {
-                                u32::try_from(val.load_int(257)?)
+                                u64::try_from(val.load_int(257)?)
                                     .map_err(|err| TonCellError::InvalidInput(err.to_string()))
                             },
                         )
@@ -374,13 +374,13 @@ impl Viewer {
         Ok(exclusives_with_data)
     }
 
-    pub async fn get_item_price(&self, store_address: TonAddress) -> ViewerResult<u32> {
+    pub async fn get_item_price(&self, store_address: TonAddress) -> ViewerResult<u64> {
         struct GetItemPrice {
             store_address: TonAddress,
         }
 
         impl Task for GetItemPrice {
-            type Output = u32;
+            type Output = u64;
 
             fn job_payload(&self) -> ((reqwest::Method, &'static str), serde_json::Value) {
                 let store_address = self.store_address.to_string();
@@ -411,7 +411,7 @@ impl Viewer {
 
                 if let Some(stack_item) = payload.stack.and_then(|mut stack| stack.pop()) {
                     if stack_item.type_ == "num" {
-                        u32::from_str_radix(&stack_item.value[2..], 16).map_err(|_| err_response())
+                        u64::from_str_radix(&stack_item.value[2..], 16).map_err(|_| err_response())
                     } else {
                         Err(err_response())
                     }
