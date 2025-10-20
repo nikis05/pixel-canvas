@@ -33,6 +33,11 @@ initSentry({
   sendDefaultPii: true,
 });
 
+console.log("not launching analytics", {
+  TG_ANALYTICS_IDENTIFIER,
+  TG_ANALYTICS_TOKEN,
+});
+
 if (TG_ANALYTICS_IDENTIFIER != undefined && TG_ANALYTICS_TOKEN != undefined) {
   console.log("launching analytics");
   telegramAnalytics
