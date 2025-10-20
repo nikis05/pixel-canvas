@@ -3,7 +3,7 @@ import { Modal, ModalHandle } from "@/components/Modal";
 import { Section } from "@/components/Section";
 import { List } from "@telegram-apps/telegram-ui";
 import { FC } from "react";
-import { BsGithub, BsInfoSquare } from "react-icons/bs";
+import { BsGithub, BsInfoSquare, BsTelegram } from "react-icons/bs";
 import { RiFeedbackLine } from "react-icons/ri";
 
 export const InfoModal: FC<{ handle: ModalHandle }> = ({ handle }) => {
@@ -40,6 +40,17 @@ export const InfoModal: FC<{ handle: ModalHandle }> = ({ handle }) => {
                 this form
               </Link>
               .
+            </>
+          }
+        />
+        <Section
+          Icon={BsTelegram}
+          title="News & announcements"
+          description={
+            <>
+              Join our{" "}
+              <Link href="https://t.me/PixelCanvasNews">Telegram channel</Link>{" "}
+              to keep up with our updates
             </>
           }
         />
