@@ -37,21 +37,21 @@ console.log("Analytics");
 console.log(TG_ANALYTICS_IDENTIFIER);
 console.log(TG_ANALYTICS_TOKEN);
 
-if (TG_ANALYTICS_IDENTIFIER != undefined && TG_ANALYTICS_TOKEN != undefined) {
-  console.log("Launching analytics");
-  telegramAnalytics
-    .init({
-      appName: TG_ANALYTICS_IDENTIFIER,
-      token: TG_ANALYTICS_TOKEN,
-    })
-    .then(() => console.log("launched"))
-    .catch((e) => console.log("failed", e));
-}
-
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 
 try {
   initMiniApp();
+
+  if (TG_ANALYTICS_IDENTIFIER != undefined && TG_ANALYTICS_TOKEN != undefined) {
+    console.log("Launching analytics");
+    telegramAnalytics
+      .init({
+        appName: TG_ANALYTICS_IDENTIFIER,
+        token: TG_ANALYTICS_TOKEN,
+      })
+      .then(() => console.log("launched"))
+      .catch((e) => console.log("failed", e));
+  }
 
   root.render(
     <StrictMode>
