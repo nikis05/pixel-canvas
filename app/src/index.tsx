@@ -9,7 +9,8 @@ import { TonConnectUIProvider } from "@tonconnect/ui-react";
 import { publicUrl } from "./utils/publicUrl.ts";
 import { App } from "./App.tsx";
 import "./index.css";
-import { init as initSentry } from "@sentry/react";
+import { captureException, init as initSentry } from "@sentry/react";
+import telegramAnalytics from "@telegram-apps/analytics";
 
 function loadEnvVar(name: string) {
   const value = import.meta.env[name] as string | undefined;
@@ -20,11 +21,26 @@ function loadEnvVar(name: string) {
 export const STORE_ADDRESS = loadEnvVar("VITE_STORE_ADDRESS");
 export const API_URL = loadEnvVar("VITE_API_URL");
 export const RENDER_URL = loadEnvVar("VITE_RENDER_URL");
+export const TG_ANALYTICS_IDENTIFIER = import.meta.env[
+  "VITE_TG_ANALYTICS_IDENTIFIER"
+] as string | undefined;
+export const TG_ANALYTICS_TOKEN = import.meta.env["VITE_TG_ANALYTICS_TOKEN"] as
+  | string
+  | undefined;
 
 initSentry({
   dsn: "https://41577d78bcef62be195e4796d03840ac@o4504381711056896.ingest.us.sentry.io/4510161823596544",
   sendDefaultPii: true,
 });
+
+if (TG_ANALYTICS_IDENTIFIER != undefined && TG_ANALYTICS_TOKEN != undefined) {
+  telegramAnalytics
+    .init({
+      appName: TG_ANALYTICS_IDENTIFIER,
+      token: TG_ANALYTICS_TOKEN,
+    })
+    .catch(captureException);
+}
 
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 
