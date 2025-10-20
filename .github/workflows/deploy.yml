@@ -150,7 +150,7 @@ jobs:
           VITE_API_URL=${{ vars.API_URL }}
           VITE_RENDER_URL=${{ vars.RENDER_URL }}
           VITE_TG_ANALYTICS_IDENTIFIER=${{ vars.TG_ANALYTICS_IDENTIFIER }}
-          VITE_TG_ANALYTICS_TOKEN=${{ secrets.TG_ANALYTICS_TOKEN }}
+          VITE_TG_ANALYTICS_TOKEN=${{ vars.TG_ANALYTICS_TOKEN }}
           npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v5

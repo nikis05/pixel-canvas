@@ -34,6 +34,7 @@ initSentry({
 });
 
 if (TG_ANALYTICS_IDENTIFIER != undefined && TG_ANALYTICS_TOKEN != undefined) {
+  console.log("launching analytics");
   telegramAnalytics
     .init({
       appName: TG_ANALYTICS_IDENTIFIER,

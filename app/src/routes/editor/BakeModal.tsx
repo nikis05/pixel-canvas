@@ -31,8 +31,6 @@ export const BakeModal: FC<{
       .then((text) => parseInt(text, 10))
   );
 
-  console.log({ itemPrice });
-
   const [bakeResult, setBakeResult] = useState<boolean | null>(null);
 
   useEffect(() => {
