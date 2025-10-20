@@ -16,6 +16,7 @@
   "dependencies": {
     "@sentry/react": "^10.19.0",
     "@tanstack/react-virtual": "^3.13.12",
+    "@telegram-apps/analytics": "^1.4.4",
     "@telegram-apps/sdk-react": "^3.3.9",
     "@telegram-apps/telegram-ui": "^2.1.9",
     "@ton/core": "^0.62.0",
