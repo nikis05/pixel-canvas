@@ -44,10 +44,11 @@ contract Item with Issuable {
             self.artistAddress = itemCreateData.artistAddress;
         } else {
             let sender: Address = sender();
-            require(sender == self.owner, "Not the owner");
-            require(myBalance() >= ton("0.05"), "Insufficient contract balance");
             let ctx: Context = context();
-            let coinsRemaining: Int = ctx.value;
+            let msgValue = ctx.value;
+            require(sender == self.owner, "Not the owner");
+            require(myBalance() - msgValue >= ton("0.02"), "Insufficient contract balance");
+            let coinsRemaining: Int = msgValue;
             let forwardFee = ctx.readForwardFee();
             if (msg.forwardAmount > 0) {
                 coinsRemaining -= (msg.forwardAmount + forwardFee);
