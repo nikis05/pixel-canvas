@@ -120,8 +120,6 @@ contract Store with SafeTransferable, Resumable {
         });
     }
 
-    bounced(msg: ) {}
-
     receive(msg: RemoveExclusive) {
         self.requireOwner();
         let itemIndex: Int = msg.itemIndex;
