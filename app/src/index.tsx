@@ -9,7 +9,7 @@ import { TonConnectUIProvider } from "@tonconnect/ui-react";
 import { publicUrl } from "./utils/publicUrl.ts";
 import { App } from "./App.tsx";
 import "./index.css";
-import { captureException, init as initSentry } from "@sentry/react";
+import { init as initSentry } from "@sentry/react";
 import telegramAnalytics from "@telegram-apps/analytics";
 
 function loadEnvVar(name: string) {
